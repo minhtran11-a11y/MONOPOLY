@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cờ Tỷ Phú 3D - Việt Nam</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-900 text-slate-100 overflow-hidden">
+
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- MAIN MENU LAYER -->
+    <div id="main-menu-layer" class="absolute top-0 left-0 w-full h-full z-50 flex items-center justify-center backdrop-blur-sm transition-opacity duration-700">
+        
+        <!-- View 1: Intro -->
+        <div id="view-intro" class="absolute text-center transition-all duration-500 scale-100 opacity-100 flex flex-col items-center">
+            <div class="relative mb-16 animate-float">
+                <h1 class="text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-orange-500 to-red-600 drop-shadow-2xl z-10 relative tracking-tighter">CỜ TỶ PHÚ</h1>
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-orange-500 blur-[100px] opacity-30 -z-10"></div>
+                <h2 class="text-3xl font-extrabold text-white/90 mt-2 tracking-[0.3em] drop-shadow-lg">PHIÊN BẢN 3D VIỆT NAM</h2>
+            </div>
+            
+            <button id="btn-start-game" class="group relative overflow-hidden bg-white text-slate-900 font-black text-2xl py-5 px-16 rounded-2xl shadow-2xl transform transition-all hover:scale-110 active:scale-95 flex items-center gap-4 hover:bg-yellow-400">
+                <span class="relative z-10">BẮT ĐẦU CHƠI</span>
+                <span class="text-3xl relative z-10 group-hover:rotate-12 transition-transform">🎲</span>
+                <div class="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:animate-[shine_1.5s_ease-in-out]"></div>
+            </button>
+        </div>
+
+        <!-- View 2: Mode Selection -->
+        <div id="view-mode" class="absolute text-center transition-all duration-500 scale-90 opacity-0 pointer-events-none w-full">
+            <h2 class="text-5xl font-black text-white mb-16 drop-shadow-2xl">SELECT MODE</h2>
+            <div class="flex gap-10 justify-center">
+                <button id="btn-mode-bot" class="menu-card glass-panel w-72 h-96 rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer pointer-events-auto border-2 border-white/20 hover:border-blue-400/50">
+                    <div class="text-8xl mb-8 group-hover:scale-110 transition-transform">🤖</div>
+                    <h3 class="text-3xl font-black text-slate-800">BOT SOLO</h3>
+                    <p class="text-slate-500 mt-3 font-semibold uppercase tracking-wider text-sm">Play against AI</p>
+                </button>
+                <button id="btn-mode-online" class="menu-card glass-panel w-72 h-96 rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer pointer-events-auto border-2 border-white/20 hover:border-emerald-400/50">
+                    <div class="text-8xl mb-8 group-hover:scale-110 transition-transform">🌐</div>
+                    <h3 class="text-3xl font-black text-slate-800">ONLINE</h3>
+                    <p class="text-slate-500 mt-3 font-semibold uppercase tracking-wider text-sm">Multiplayer Mode</p>
+                </button>
+            </div>
+            <button class="mt-16 text-slate-300 hover:text-white font-bold text-xl transition-all btn-back-intro pointer-events-auto hover:tracking-widest">← BACK</button>
+        </div>
+
+        <!-- Other views follow the same pattern... -->
+        <!-- View 3: Bot Select -->
+        <div id="view-bot-select" class="absolute text-center transition-all duration-500 scale-90 opacity-0 pointer-events-none w-full max-w-4xl px-4">
+            <h2 class="text-5xl font-black text-white mb-8 drop-shadow-2xl">SỐ LƯỢNG NGƯỜI CHƠI</h2>
+            
+            <div class="mb-10 inline-block bg-white/10 p-2 rounded-2xl border border-white/20 backdrop-blur-md pointer-events-auto">
+                <span class="text-white font-bold mr-4 ml-2">ĐỘ KHÓ BOT:</span>
+                <select id="bot-difficulty" class="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                    <option value="easy">Dễ (Ngẫu nhiên)</option>
+                    <option value="medium" selected>Trung bình (Cân bằng)</option>
+                    <option value="hard">Khó (Hung hăng)</option>
+                </select>
+            </div>
+
+            <div class="flex gap-6 justify-center flex-wrap">
+                <button class="btn-start-bot glass-panel px-10 py-8 rounded-3xl hover:scale-105 transition-all font-black text-xl text-slate-800 flex items-center gap-4 border-2 border-transparent hover:border-blue-400 pointer-events-auto" data-total="2">
+                    <span class="text-4xl">👤</span> 1 Player vs 1 Bot
+                </button>
+                <button class="btn-start-bot glass-panel px-10 py-8 rounded-3xl hover:scale-105 transition-all font-black text-xl text-slate-800 flex items-center gap-4 border-2 border-transparent hover:border-blue-400 pointer-events-auto" data-total="3">
+                    <span class="text-4xl">👥</span> 1 Player vs 2 Bot
+                </button>
+                <button class="btn-start-bot glass-panel px-10 py-8 rounded-3xl hover:scale-105 transition-all font-black text-xl text-slate-800 flex items-center gap-4 border-2 border-transparent hover:border-blue-400 pointer-events-auto" data-total="4">
+                    <span class="text-4xl">👨‍👩‍👧‍👦</span> 1 Player vs 3 Bot
+                </button>
+            </div>
+            <button class="mt-16 text-slate-300 hover:text-white font-bold text-xl btn-back-mode pointer-events-auto hover:tracking-widest">← QUAY LẠI</button>
+        </div>
+
+        <!-- View 4: Login -->
+        <div id="view-login" class="absolute text-center transition-all duration-500 scale-90 opacity-0 pointer-events-none flex flex-col items-center w-full">
+            <h2 class="text-5xl font-black text-white mb-12 drop-shadow-2xl">ĐĂNG NHẬP TÀI KHOẢN</h2>
+            <div class="glass-panel p-12 rounded-[3rem] w-[450px] max-w-full shadow-2xl pointer-events-auto border-2 border-white/20">
+                <input type="text" placeholder="Tên đăng nhập" class="w-full px-6 py-4 rounded-2xl bg-white/50 border border-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-500/30 mb-5 font-bold text-slate-800 placeholder-slate-500 text-lg">
+                <input type="password" placeholder="Mật khẩu" class="w-full px-6 py-4 rounded-2xl bg-white/50 border border-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-500/30 mb-8 font-bold text-slate-800 placeholder-slate-500 text-lg">
+                <button id="btn-do-login" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl transform transition-all active:scale-95 hover:bg-emerald-600 text-xl tracking-wider">ĐĂNG NHẬP</button>
+            </div>
+            <button class="mt-12 text-slate-300 hover:text-white font-bold text-xl btn-back-mode pointer-events-auto hover:tracking-widest">← QUAY LẠI</button>
+        </div>
+
+        <!-- View 5: Online Select -->
+        <div id="view-online-select" class="absolute text-center transition-all duration-500 scale-90 opacity-0 pointer-events-none w-full max-w-4xl px-4">
+            <h2 class="text-5xl font-black text-white mb-4 drop-shadow-2xl">PHÒNG CHỜ ONLINE</h2>
+            <p class="text-emerald-400 font-black mb-12 tracking-widest uppercase text-sm">Đã đăng nhập thành công</p>
+            <div class="flex gap-6 justify-center flex-wrap">
+                <button class="btn-start-online glass-panel px-10 py-8 rounded-3xl hover:scale-105 transition-all font-black text-xl text-slate-800 flex items-center gap-4 border-2 border-transparent hover:border-emerald-400 pointer-events-auto" data-total="2">
+                    <span class="text-4xl">⚔️</span> 1 Player vs 1 Player
+                </button>
+                <button class="btn-start-online glass-panel px-10 py-8 rounded-3xl hover:scale-105 transition-all font-black text-xl text-slate-800 flex items-center gap-4 border-2 border-transparent hover:border-emerald-400 pointer-events-auto" data-total="3">
+                    <span class="text-4xl">⚔️</span> 1 Player vs 2 Player
+                </button>
+                <button class="btn-start-online glass-panel px-10 py-8 rounded-3xl hover:scale-105 transition-all font-black text-xl text-slate-800 flex items-center gap-4 border-2 border-transparent hover:border-emerald-400 pointer-events-auto" data-total="4">
+                    <span class="text-4xl">⚔️</span> 1 Player vs 3 Player
+                </button>
+            </div>
+            <button class="mt-16 text-slate-300 hover:text-white font-bold text-xl btn-back-login pointer-events-auto hover:tracking-widest">ĐĂNG XUẤT & QUAY LẠI</button>
+        </div>
+    </div>
+
+    <!-- UI GAME LAYER -->
+    <div id="game-ui-layer" class="relative w-full h-full pointer-events-none overflow-hidden" style="display: none;">
+        
+        <!-- Top Left: Game Log -->
+        <div class="absolute top-6 left-6 glass-panel w-80 md:w-96 h-64 md:h-80 rounded-[2rem] p-6 flex flex-col pointer-events-auto shadow-2xl z-10 border border-white/20">
+            <h2 class="text-lg font-black text-slate-800 mb-4 border-b border-slate-300/50 pb-3 flex items-center justify-between uppercase tracking-widest">
+                <span>Game Ledger</span>
+                <span class="text-xl">📜</span>
+            </h2>
+            <div id="game-log" class="flex-1 overflow-y-auto text-sm space-y-3 font-bold text-slate-600 pr-2 custom-scrollbar">
+                <div class="text-indigo-600 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 bg-indigo-600 rounded-full"></span>
+                    Initializing session...
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Right: Player Status -->
+        <div id="players-container" class="absolute top-6 right-6 flex flex-col gap-3 pointer-events-auto z-10 max-h-[85vh] overflow-y-auto pb-4 pr-1">
+            <!-- Players injected here -->
+        </div>
+
+        <!-- Center: Actions Modal -->
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full flex justify-center items-center pointer-events-none z-20">
+            <div id="action-modal" class="glass-panel rounded-[3rem] p-10 text-center shadow-[0_20px_60px_rgba(0,0,0,0.4)] transition-all duration-500 scale-0 pointer-events-auto max-w-md w-full hidden border-2 border-white/40">
+                <h2 id="modal-title" class="text-3xl font-black text-slate-900 mb-2">YOUR TURN</h2>
+                <p id="modal-desc" class="text-slate-600 mb-8 min-h-[50px] text-lg font-bold">Waiting for action...</p>
+                <div id="modal-buttons" class="flex justify-center gap-3 flex-wrap">
+                    <button id="btn-roll" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition transform hover:scale-105 active:scale-95 text-lg">ROLL DICE</button>
+                    <button id="btn-build-menu" class="bg-orange-500 hover:bg-orange-600 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition transform hover:scale-105 active:scale-95 hidden text-lg">BUILD</button>
+                    <button id="btn-buy" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition transform hover:scale-105 active:scale-95 hidden text-lg">BUY</button>
+                    <button id="btn-skip" class="bg-slate-500 hover:bg-slate-600 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition transform hover:scale-105 active:scale-95 hidden text-lg">SKIP</button>
+                    <button id="btn-end" class="bg-purple-600 hover:bg-purple-700 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition transform hover:scale-105 active:scale-95 hidden text-lg">END TURN</button>
+                </div>
+                <div id="build-submenu" class="hidden flex-col gap-3 mt-6 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                    <!-- Injected dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Center: Tile Info -->
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex justify-center pointer-events-none z-10 w-11/12 md:w-auto">
+            <div id="tile-info" class="glass-panel rounded-full px-10 py-5 flex items-center gap-6 transition-all duration-500 translate-y-32 opacity-0 pointer-events-auto shadow-2xl border-2 border-white/40">
+                <div id="tile-color" class="w-14 h-14 rounded-full border-4 border-slate-900/10 shadow-inner flex-shrink-0"></div>
+                <div class="text-left whitespace-nowrap">
+                    <h3 id="tile-name" class="font-black text-2xl text-slate-900 leading-tight">Property Name</h3>
+                    <p id="tile-price" class="text-lg text-slate-700 font-extrabold mt-1">Price: $0 | Rent: $0</p>
+                    <p id="tile-owner" class="text-sm text-slate-500 font-bold uppercase tracking-widest mt-1">OWNER: BANK</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Scripts -->
+    <script src="js/audio.js"></script>
+    <script src="js/constants.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/menu.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
