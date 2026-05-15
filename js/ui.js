@@ -18,30 +18,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const playClick = () => { if(window.SoundFX) window.SoundFX.click(); };
 
     // --- RULES MODAL ---
+    const rulesPanel = document.getElementById('rules-modal-panel');
+
     window.closeRules = () => {
         playClick();
-        if (rulesModal) {
-            rulesModal.classList.add('opacity-0', 'pointer-events-none');
-            // Force hidden to be sure
-            setTimeout(() => {
-                if (rulesModal.classList.contains('opacity-0')) rulesModal.classList.add('hidden');
-            }, 500);
-        }
+        if (rulesModal) rulesModal.classList.add('hidden');
     };
 
-    const showRules = () => {
+    window.showRules = () => {
         playClick();
-        if (rulesModal) {
-            rulesModal.classList.remove('hidden');
-            // Force reflow
-            rulesModal.offsetHeight;
-            rulesModal.classList.remove('opacity-0', 'pointer-events-none');
-        }
+        if (rulesModal) rulesModal.classList.remove('hidden');
     };
 
-    if (document.getElementById('btn-show-rules')) {
-        document.getElementById('btn-show-rules').onclick = showRules;
+    const btnShowRules = document.getElementById('btn-show-rules');
+    if (btnShowRules) btnShowRules.onclick = window.showRules;
+
+    // Wire every close trigger (X button + bottom buttons)
+    document.querySelectorAll('[data-close-rules]').forEach(el => {
+        el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.closeRules();
+        });
+    });
+
+    // Click backdrop to close (but not when clicking inside the panel)
+    if (rulesModal) {
+        rulesModal.addEventListener('click', (e) => {
+            if (e.target === rulesModal) window.closeRules();
+        });
     }
+    if (rulesPanel) {
+        rulesPanel.addEventListener('click', (e) => e.stopPropagation());
+    }
+
+    // ESC key closes the modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && rulesModal && !rulesModal.classList.contains('hidden')) {
+            window.closeRules();
+        }
+    });
 
 
 
