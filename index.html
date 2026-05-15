@@ -275,65 +275,7 @@
             </div>
         </div>
 
-        <!-- Rules Modal -->
-        <div id="rules-modal" onclick="closeRules()" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-500">
-            <div onclick="event.stopPropagation()" class="glass-panel p-10 max-w-2xl w-full max-h-[85vh] overflow-y-auto custom-scrollbar border-white/20 relative">
-
-                <!-- Header row: title + X button -->
-                <div class="flex items-start justify-between mb-8">
-                    <h2 class="text-4xl font-black text-slate-900 uppercase italic leading-tight">📖 Thể lệ<br>trò chơi</h2>
-                    <button id="btn-close-rules-x" onclick="closeRules()"
-                        class="px-6 py-2 rounded-xl bg-slate-900/10 hover:bg-rose-500 hover:text-white text-slate-600 font-black text-xs uppercase tracking-widest transition-all duration-300 flex-shrink-0 ml-4 border border-white/20"
-                        title="Thoát bảng thể lệ">
-                        Thoát
-                    </button>
-                </div>
-
-                <div class="space-y-6 text-slate-700 font-bold leading-relaxed">
-                    <section>
-                        <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Chuẩn bị</h3>
-                        <p>Mỗi người chơi chọn 1 quân cờ, nhận một số tiền vốn nhất định từ ngân hàng (thông thường là $1500).</p>
-                    </section>
-                    <section>
-                        <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Bắt đầu</h3>
-                        <p>Tung xúc xắc, ai cao điểm nhất đi trước. Người chơi đi theo chiều kim đồng hồ.</p>
-                    </section>
-                    <section>
-                        <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Di chuyển</h3>
-                        <p>Tung 2 viên xúc xắc và di chuyển quân cờ tương ứng.</p>
-                    </section>
-                    <section>
-                        <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Hành động tại ô dừng chân</h3>
-                        <ul class="list-disc list-inside ml-2 mt-2 space-y-2">
-                            <li><strong>Mua đất:</strong> Trả tiền cho ngân hàng để sở hữu thẻ đất.</li>
-                            <li><strong>Trả tiền thuê:</strong> Nếu dừng ở đất đối thủ, phải trả tiền thuê theo thẻ.</li>
-                            <li><strong>Vào tù:</strong> Mất 3 lượt hoặc phải đổ xúc xắc ra đôi để thoát.</li>
-                            <li><strong>Xây nhà:</strong> Khi đã sở hữu toàn bộ các ô đất trong một nhóm màu, bạn được phép xây nhà/khách sạn để tăng phí thuê.</li>
-                        </ul>
-                    </section>
-                    <section>
-                        <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Phá sản</h3>
-                        <p>Khi nợ tiền đối thủ hoặc ngân hàng mà không có tiền mặt hay tài sản để thế chấp, bạn bị loại khỏi trò chơi.</p>
-                    </section>
-                    <section>
-                        <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Chiến thắng</h3>
-                        <p>Trò chơi kết thúc khi chỉ còn 1 người duy nhất không phá sản.</p>
-                    </section>
-                </div>
-
-                <!-- Bottom buttons -->
-                <div class="flex gap-4 mt-10">
-                    <button id="btn-close-rules"
-                        class="flex-1 py-5 bg-white/20 hover:bg-white/30 text-slate-800 font-black uppercase tracking-widest rounded-2xl transition-all duration-300 border border-white/30 hover:scale-105">
-                        ← Tiếp tục chơi
-                    </button>
-                    <button id="btn-understood"
-                        class="flex-[2] btn-primary py-5">
-                        ✅ TÔI ĐÃ HIỂU
-                    </button>
-                </div>
-            </div>
-        </div>
+        <!-- Rules Modal placeholder removed; new modal is injected at body level below -->
 
 
         <!-- Action Central -->
@@ -365,6 +307,63 @@
             <div class="flex gap-8 bg-black/40 backdrop-blur-xl p-10 rounded-[3rem] border border-white/20 shadow-[0_0_100px_rgba(0,0,0,0.5)]">
                 <div id="dice-1-ui" class="w-32 h-32 bg-white rounded-3xl flex items-center justify-center text-6xl shadow-2xl font-black text-slate-900">1</div>
                 <div id="dice-2-ui" class="w-32 h-32 bg-white rounded-3xl flex items-center justify-center text-6xl shadow-2xl font-black text-slate-900">1</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules Modal (top-level, outside #game-ui-layer to avoid pointer-events issues) -->
+    <div id="rules-modal" class="hidden fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-md" style="pointer-events: auto;">
+        <div id="rules-modal-panel" class="glass-panel p-10 max-w-2xl w-[90%] max-h-[85vh] overflow-y-auto custom-scrollbar border-white/20 relative">
+            <div class="flex items-start justify-between mb-8">
+                <h2 class="text-4xl font-black text-slate-900 uppercase italic leading-tight">📖 Thể lệ<br>trò chơi</h2>
+                <button data-close-rules type="button"
+                    class="px-6 py-2 rounded-xl bg-slate-900/10 hover:bg-rose-500 hover:text-white text-slate-600 font-black text-xs uppercase tracking-widest transition-all duration-300 flex-shrink-0 ml-4 border border-white/20"
+                    title="Đóng (Esc)">
+                    Thoát ✕
+                </button>
+            </div>
+
+            <div class="space-y-6 text-slate-700 font-bold leading-relaxed">
+                <section>
+                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Chuẩn bị</h3>
+                    <p>Mỗi người chơi chọn 1 quân cờ, nhận một số tiền vốn nhất định từ ngân hàng (thông thường là $1500).</p>
+                </section>
+                <section>
+                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Bắt đầu</h3>
+                    <p>Tung xúc xắc, ai cao điểm nhất đi trước. Người chơi đi theo chiều kim đồng hồ.</p>
+                </section>
+                <section>
+                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Di chuyển</h3>
+                    <p>Tung 2 viên xúc xắc và di chuyển quân cờ tương ứng.</p>
+                </section>
+                <section>
+                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Hành động tại ô dừng chân</h3>
+                    <ul class="list-disc list-inside ml-2 mt-2 space-y-2">
+                        <li><strong>Mua đất:</strong> Trả tiền cho ngân hàng để sở hữu thẻ đất.</li>
+                        <li><strong>Trả tiền thuê:</strong> Nếu dừng ở đất đối thủ, phải trả tiền thuê theo thẻ.</li>
+                        <li><strong>Vào tù:</strong> Mất 3 lượt hoặc phải đổ xúc xắc ra đôi để thoát.</li>
+                        <li><strong>Xây nhà:</strong> Khi đã sở hữu toàn bộ các ô đất trong một nhóm màu, bạn được phép xây nhà/khách sạn để tăng phí thuê.</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Phá sản</h3>
+                    <p>Khi nợ tiền đối thủ hoặc ngân hàng mà không có tiền mặt hay tài sản để thế chấp, bạn bị loại khỏi trò chơi.</p>
+                </section>
+                <section>
+                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Chiến thắng</h3>
+                    <p>Trò chơi kết thúc khi chỉ còn 1 người duy nhất không phá sản.</p>
+                </section>
+            </div>
+
+            <div class="flex gap-4 mt-10">
+                <button data-close-rules type="button"
+                    class="flex-1 py-5 bg-white/20 hover:bg-white/30 text-slate-800 font-black uppercase tracking-widest rounded-2xl transition-all duration-300 border border-white/30 hover:scale-105">
+                    ← Tiếp tục chơi
+                </button>
+                <button data-close-rules type="button"
+                    class="flex-[2] btn-primary py-5">
+                    ✅ TÔI ĐÃ HIỂU
+                </button>
             </div>
         </div>
     </div>
