@@ -3,6 +3,7 @@ const Game = {
     players: [],
     currentPlayerIndex: 0,
     isAnimating: false,
+    lastRoll: null,  // { d1, d2, total } — for replay
     
     init(total, mode) {
         // Clear previous state
@@ -36,8 +37,9 @@ const Game = {
         const startPlayer = this.players[this.currentPlayerIndex];
         
         renderPlayerUI();
-        logEl.innerHTML = '';
-        logMsg(`Chào mừng bạn đến với Monopoly! Mỗi người nhận được ${Utils.formatMoney(GAME_CONFIG.START_MONEY)}.`);
+        const _logEl = document.getElementById('game-log');
+        if (_logEl) _logEl.innerHTML = '';
+        logMsg(`Chào mừng bạn đến với Cờ Tỷ Phú! Mỗi người nhận được ${Utils.formatMoney(GAME_CONFIG.START_MONEY)}.`);
         logMsg(`🎲 Đã tung xúc xắc quyết định: ${startPlayer.name} được đi trước!`);
         
         this.startTurn();
@@ -46,9 +48,21 @@ const Game = {
     startTurn() {
         const p = this.players[this.currentPlayerIndex];
         if (p.bankrupt) { this.nextTurn(); return; }
-        
+
         updatePlayerUI();
-        
+
+        // Always reset camera to a useful position at start of turn so the
+        // player sees their token instead of wherever the previous turn ended.
+        // For human player: return to overview (let them see the whole board).
+        // For bot: focus on the bot so the user can watch it move.
+        if (window.Cinematics) {
+            if (p.isBot) {
+                window.Cinematics.focusOnPlayer(p);
+            } else {
+                window.Cinematics.returnToOverview();
+            }
+        }
+
         if (p.isBot) {
             hideModal();
             setTimeout(() => this.doBotTurn(p), 1500); // Increased from 1s to 1.5s
@@ -70,7 +84,8 @@ const Game = {
             // Auto-process jail turn for human to keep bot flow
             setTimeout(() => {
                 if (this.currentPlayerIndex === p.id && p.inJail) {
-                    btnRoll.click();
+                    const btn = document.getElementById('btn-roll');
+                    if (btn) btn.click();
                 }
             }, 2000);
         } else {
@@ -80,6 +95,7 @@ const Game = {
 
     doBotTurn(p) {
         p.isThinking = true;
+        // Camera focus already happened in startTurn — no double tween here.
         updatePlayerUI();
         logMsg(`🤖 ${p.name} đang phân tích bàn cờ...`);
         
@@ -144,7 +160,10 @@ const Game = {
         p.money -= target.houseCost;
         target.houses++;
         if(window.SoundFX) window.SoundFX.build();
-        logMsg(`🔨 NPC ${p.name} xây ${target.houses === 5 ? 'Khách sạn' : 'Nhà'} tại ${target.name}.`);
+        if(window.Settings) window.Settings.haptic(30);
+        const msg = `🔨 ${p.name} xây ${target.houses === 5 ? 'Khách sạn' : 'Nhà'} tại ${target.name}.`;
+        logMsg(msg);
+        if(window.Toast) window.Toast.show(msg, { type: 'success', icon: '🔨' });
         updatePlayerUI();
         update3DHouses(target.id);
     },
@@ -156,7 +175,10 @@ const Game = {
 
         if (target < current) {
             player.money += GAME_CONFIG.PASS_GO_MONEY;
-            logMsg(`💰 ${player.name} đi qua BẮT ĐẦU, nhận ${Utils.formatMoney(GAME_CONFIG.PASS_GO_MONEY)}.`);
+            const goMsg = `💰 ${player.name} đi qua BẮT ĐẦU, nhận ${Utils.formatMoney(GAME_CONFIG.PASS_GO_MONEY)}.`;
+            logMsg(goMsg);
+            if(window.Toast) window.Toast.show(goMsg, { type: 'money', icon: '💰' });
+            if(window.Settings) window.Settings.haptic(40);
             updatePlayerUI();
         }
 
@@ -169,14 +191,28 @@ const Game = {
                 let tilePos = boardMeshes[tileIdx].position;
                 player.mesh.position.x = tilePos.x + (player.id % 2 === 0 ? 1.5 : -1.5);
                 player.mesh.position.z = tilePos.z + (player.id > 1 ? 1.5 : -1.5);
-                
-                // Hop animation
-                player.mesh.position.y = 2.0;
-                setTimeout(() => player.mesh.position.y = 1.0, 150);
+
+                // Squash-stretch hop animation
+                if (window.animateTokenHop) {
+                    window.animateTokenHop(player.mesh, 2.0, 1.0, 200);
+                } else {
+                    player.mesh.position.y = 2.0;
+                    setTimeout(() => player.mesh.position.y = 1.0, 150);
+                }
+
+                // Trail sparkle in player color
+                if (window.Anim3D && window.scene && player.colorHex) {
+                    const c = parseInt(player.colorHex.replace('#', ''), 16);
+                    window.Anim3D.trailEmit(window.scene, player.mesh.position.clone(), c);
+                }
 
                 if (i === path.length - 1) {
                     setTimeout(() => {
                         window.isAnimating = false;
+                        // Pulse the destination tile so player can see exactly where they landed
+                        if (window.Anim3D && boardMeshes[tileIdx]) {
+                            window.Anim3D.tilePulse(boardMeshes[tileIdx]);
+                        }
                         this.handleSpaceLanded(player, tileIdx, isDouble);
                     }, 400);
                 }
@@ -213,15 +249,17 @@ const Game = {
         } else {
             if (player.money >= tile.price) {
                 showModal(`Mua Đất?`, `${tile.name}\nGiá: ${Utils.formatMoney(tile.price)}\nTiền thuê: ${Utils.formatMoney(calculateRent(tile))}`, ['buy', 'skip']);
-                btnBuy.onclick = () => { 
+                const btnBuy = document.getElementById('btn-buy');
+                const btnSkip = document.getElementById('btn-skip');
+                if (btnBuy) btnBuy.onclick = () => {
                     hideModal();
-                    this.executeBuyProperty(player, tile, tileIdx); 
-                    this.checkEndTurnPhase(isDouble); 
+                    this.executeBuyProperty(player, tile, tileIdx);
+                    this.checkEndTurnPhase(isDouble);
                 };
-                btnSkip.onclick = () => { 
+                if (btnSkip) btnSkip.onclick = () => {
                     hideModal();
-                    logMsg(`${player.name} đã từ chối mua.`); 
-                    this.checkEndTurnPhase(isDouble); 
+                    logMsg(`${player.name} đã từ chối mua.`);
+                    this.checkEndTurnPhase(isDouble);
                 };
             } else {
                 logMsg(`Bạn không đủ tiền để mua ${tile.name}.`);
@@ -238,8 +276,15 @@ const Game = {
         } else {
             let rent = calculateRent(tile);
             if(window.SoundFX) window.SoundFX.pay();
+            if(window.Settings) window.Settings.haptic(60);
             if (player.isBot) this.botChat(player, 'pay');
-            logMsg(`💸 ${player.name} đã trả ${Utils.formatMoney(rent)} tiền thuê cho ${owner.name}.`);
+            const rentMsg = `💸 ${player.name} đã trả ${Utils.formatMoney(rent)} tiền thuê cho ${owner.name}.`;
+            logMsg(rentMsg);
+            if(window.Toast) window.Toast.show(rentMsg, { type: 'warn', icon: '💸' });
+            // Money particles for big rent
+            if (rent >= 200 && window.Anim3D && window.scene && player.mesh && owner.mesh) {
+                window.Anim3D.moneyFly(window.scene, player.mesh.position.clone(), owner.mesh.position.clone(), Math.min(20, Math.floor(rent / 100)));
+            }
             this.payMoney(player, owner.id, rent);
         }
         
@@ -270,7 +315,11 @@ const Game = {
     },
 
     movePlayerToJail(player) {
-        logMsg(`🚓 ${player.name} bị BẮT GIAM!`);
+        if(window.SoundFX) window.SoundFX.jail();
+        if(window.Settings) window.Settings.haptic([80, 40, 80]);
+        const jMsg = `🚓 ${player.name} bị BẮT GIAM!`;
+        logMsg(jMsg);
+        if(window.Toast) window.Toast.show(jMsg, { type: 'warn', icon: '🚓' });
         if (player.isBot) this.botChat(player, 'jail');
         player.inJail = true;
         player.position = 10;
@@ -368,9 +417,12 @@ const Game = {
 
     executeBuyProperty(player, tile, tileIdx) {
         if(window.SoundFX) window.SoundFX.buy();
+        if(window.Settings) window.Settings.haptic([20, 30, 40]);
         player.money -= tile.price;
         tile.owner = player.id;
-        logMsg(`🏡 ${player.name} đã mua ${tile.name}.`);
+        const buyMsg = `🏡 ${player.name} đã mua ${tile.name}.`;
+        logMsg(buyMsg);
+        if(window.Toast) window.Toast.show(buyMsg, { type: 'success', icon: '🏡' });
         
         const groupCount = boardData.filter(t => t.groupId === tile.groupId && t.owner === player.id).length;
         if (tile.type === TILE_TYPES.RAILROAD) logMsg(`🚂 Bạn hiện sở hữu ${groupCount}/4 bến tàu.`);
@@ -444,7 +496,11 @@ const Game = {
     },
 
     handleBankruptcy(p) {
-        logMsg(`💀 ${p.name} đã PHÁ SẢN!`);
+        if(window.SoundFX) window.SoundFX.bankrupt();
+        if(window.Settings) window.Settings.haptic([100, 50, 100, 50, 200]);
+        const bMsg = `💀 ${p.name} đã PHÁ SẢN!`;
+        logMsg(bMsg);
+        if(window.Toast) window.Toast.show(bMsg, { type: 'error', icon: '💀', ttl: 5000 });
         p.bankrupt = true;
         scene.remove(p.mesh);
         
@@ -464,7 +520,11 @@ const Game = {
 
     handleVictory(winner) {
         if(window.SoundFX) window.SoundFX.win();
+        if(window.Settings) window.Settings.haptic([200, 100, 200, 100, 400]);
         if(window.confetti) window.confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        if(window.Toast) window.Toast.show(`🏆 ${winner.name} chiến thắng!`, { type: 'success', icon: '🏆', ttl: 6000 });
+        // Cinematic zoom-out + 3D confetti
+        if(window.Cinematics) window.Cinematics.playWinning(winner);
         showModal("🏆 CHIẾN THẮNG!", `${winner.name} ĐÃ TRỞ THÀNH TỶ PHÚ!`, []);
     },
 
@@ -504,7 +564,8 @@ const Game = {
                         Game.nextTurn();
                     }
                 }, 2000);
-                btnEnd.onclick = () => {
+                const btnEndA = document.getElementById('btn-end');
+                if (btnEndA) btnEndA.onclick = () => {
                     clearTimeout(autoEnd);
                     hideModal();
                     Game.nextTurn();
@@ -512,7 +573,8 @@ const Game = {
             }
 
             // End Turn button always works
-            btnEnd.onclick = () => {
+            const btnEndB = document.getElementById('btn-end');
+            if (btnEndB) btnEndB.onclick = () => {
                 hideModal();
                 Game.nextTurn();
             };
@@ -542,11 +604,14 @@ const Game = {
 };
 
 // --- GLOBAL INITIALIZER ---
+window.Game = Game;
 window.initGameSession = (total, mode) => Game.init(total, mode);
 
-// --- ROLL BUTTON BINDING ---
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('btn-roll').onclick = () => {
+// --- ROLL BUTTON BINDING (wired after DOM ready) ---
+function _bindRollButton() {
+    const btnRoll = document.getElementById('btn-roll');
+    if (!btnRoll) return;
+    btnRoll.onclick = () => {
         if (window.isAnimating) return;
         hideModal();
         const p = Game.players[Game.currentPlayerIndex];
@@ -554,6 +619,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let d2 = Math.floor(Math.random() * 6) + 1;
         let total = d1 + d2;
         let isDouble = (d1 === d2);
+        Game.lastRoll = { d1, d2, total, player: p ? p.name : null };
 
         if(window.SoundFX) window.SoundFX.roll();
         rollDiceAnimation(d1, d2, () => {
@@ -577,7 +643,72 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     };
-});
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _bindRollButton);
+} else {
+    _bindRollButton();
+}
+
+window.replayLastRoll = () => {
+    if (!Game.lastRoll) {
+        if (window.Toast) window.Toast.show('Chưa có lần đổ xí ngầu nào', { type: 'warn' });
+        return;
+    }
+    if (window.isAnimating) return;
+    const r = Game.lastRoll;
+    if (window.SoundFX) window.SoundFX.roll();
+    if (typeof rollDiceAnimation === 'function') {
+        rollDiceAnimation(r.d1, r.d2, () => {
+            if (window.Toast) window.Toast.show(`🎲 Lần trước: ${r.d1} + ${r.d2} = ${r.total} (${r.player || ''})`, { type: 'info', icon: '🎲' });
+        });
+    }
+};
+
+window.exportGameLog = () => {
+    const logEl = document.getElementById('game-log');
+    if (!logEl) return;
+    const lines = Array.from(logEl.querySelectorAll('span.text-slate-700')).map(s => s.textContent);
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const ts = new Date().toISOString().replace(/[:.]/g, '-');
+    a.href = url; a.download = `monopoly-log-${ts}.txt`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    if (window.Toast) window.Toast.show('Đã xuất nhật ký trận đấu', { type: 'success' });
+};
+
+window.toggleMortgage = (tileId) => {
+    const tile = boardData[tileId];
+    const p = Game.players[Game.currentPlayerIndex];
+    if (!tile || !p) return;
+    if (tile.owner !== p.id) return;
+    if (tile.houses > 0) {
+        if (window.Toast) window.Toast.show('Phải bán nhà trước khi cầm cố', { type: 'warn' });
+        return;
+    }
+    if (tile.isMortgaged) {
+        const cost = Math.floor(tile.price * 0.6);
+        if (p.money < cost) {
+            if (window.Toast) window.Toast.show('Không đủ tiền chuộc đất', { type: 'error' });
+            return;
+        }
+        p.money -= cost;
+        tile.isMortgaged = false;
+        logMsg(`🔓 ${p.name} chuộc lại ${tile.name} với ${Utils.formatMoney(cost)}.`);
+        if (window.Toast) window.Toast.show(`Chuộc ${tile.name}`, { type: 'success' });
+    } else {
+        const refund = Math.floor(tile.price * 0.5);
+        p.money += refund;
+        tile.isMortgaged = true;
+        logMsg(`🏦 ${p.name} cầm cố ${tile.name} lấy ${Utils.formatMoney(refund)}.`);
+        if (window.Toast) window.Toast.show(`Cầm cố ${tile.name}`, { type: 'warn' });
+    }
+    if (window.applyMortgageVisual) window.applyMortgageVisual(tileId);
+    if (window.SoundFX) window.SoundFX.click();
+    updatePlayerUI();
+};
 
 window.executeBuild = (tileId) => {
     const p = Game.players[Game.currentPlayerIndex];
@@ -648,31 +779,3 @@ window.getBuildableProperties = function(playerId) {
     return buildables;
 };
 
-window.toggleMortgage = function(tileId) {
-    const tile = boardData[tileId];
-    if (!tile) return;
-    const p = Game.players[tile.owner];
-    if (!p) return;
-    
-    if (tile.houses > 0) {
-        alert("Phải bán hết nhà trên đất này trước khi cầm cố!");
-        return;
-    }
-    
-    if (tile.isMortgaged) {
-        const cost = Math.floor(tile.price * 0.6);
-        if (p.money >= cost) {
-            p.money -= cost;
-            tile.isMortgaged = false;
-            logMsg(`🏦 ${p.name} đã chuộc lại ${tile.name} với giá ${Utils.formatMoney(cost)}.`);
-        } else {
-            alert("Không đủ tiền chuộc!");
-        }
-    } else {
-        const value = Math.floor(tile.price * 0.5);
-        p.money += value;
-        tile.isMortgaged = true;
-        logMsg(`🏦 ${p.name} đã cầm cố ${tile.name} lấy ${Utils.formatMoney(value)}.`);
-    }
-    if (window.updatePlayerUI) window.updatePlayerUI();
-};

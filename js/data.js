@@ -42,3 +42,4 @@ const boardData = [
 ];
 
 boardData.forEach(tile => { if (tile.type === TILE_TYPES.PROPERTY || tile.type === TILE_TYPES.RAILROAD || tile.type === TILE_TYPES.UTILITY) tile.owner = null; });
+window.boardData = boardData;

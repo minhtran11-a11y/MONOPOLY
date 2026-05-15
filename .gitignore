@@ -1,0 +1,15 @@
+# Lighthouse generated reports
+lighthouse-report.json
+lighthouse-report.html
+
+# Node
+node_modules/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp

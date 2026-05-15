@@ -1,4 +1,7 @@
 // --- UI MANAGER ---
+import { Utils } from './utils.js';
+import { boardData } from './data.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     window.logEl = document.getElementById('game-log');
     window.playersContainer = document.getElementById('players-container');
@@ -18,30 +21,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const playClick = () => { if(window.SoundFX) window.SoundFX.click(); };
 
     // --- RULES MODAL ---
+    const rulesPanel = document.getElementById('rules-modal-panel');
+
     window.closeRules = () => {
         playClick();
-        if (rulesModal) {
-            rulesModal.classList.add('opacity-0', 'pointer-events-none');
-            // Force hidden to be sure
-            setTimeout(() => {
-                if (rulesModal.classList.contains('opacity-0')) rulesModal.classList.add('hidden');
-            }, 500);
-        }
+        if (rulesModal) rulesModal.classList.add('hidden');
+        document.body.classList.remove('modal-open');
     };
 
-    const showRules = () => {
+    window.showRules = () => {
         playClick();
-        if (rulesModal) {
-            rulesModal.classList.remove('hidden');
-            // Force reflow
-            rulesModal.offsetHeight;
-            rulesModal.classList.remove('opacity-0', 'pointer-events-none');
-        }
+        if (rulesModal) rulesModal.classList.remove('hidden');
+        document.body.classList.add('modal-open');
     };
 
-    if (document.getElementById('btn-show-rules')) {
-        document.getElementById('btn-show-rules').onclick = showRules;
+    const btnShowRules = document.getElementById('btn-show-rules');
+    if (btnShowRules) btnShowRules.onclick = window.showRules;
+
+    // Wire every close trigger (X button + bottom buttons)
+    document.querySelectorAll('[data-close-rules]').forEach(el => {
+        el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.closeRules();
+        });
+    });
+
+    // Click backdrop to close (but not when clicking inside the panel)
+    if (rulesModal) {
+        rulesModal.addEventListener('click', (e) => {
+            if (e.target === rulesModal) window.closeRules();
+        });
     }
+    if (rulesPanel) {
+        rulesPanel.addEventListener('click', (e) => e.stopPropagation());
+    }
+
+    // ESC key closes the modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && rulesModal && !rulesModal.classList.contains('hidden')) {
+            window.closeRules();
+        }
+    });
 
 
 
@@ -61,13 +81,13 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSurrender.onclick = () => {
             playClick();
             if(confirm("Bạn có chắc chắn muốn đầu hàng không?")) {
-                const p = Game.players[Game.currentPlayerIndex];
+                const p = window.Game.players[window.Game.currentPlayerIndex];
                 if(p && !p.isBot) {
                     p.bankrupt = true;
                     logMsg(`🏳️ ${p.name} đã đầu hàng!`);
                     btnSurrender.classList.add('hidden');
                     hideModal();
-                    Game.nextTurn();
+                    window.Game.nextTurn();
                 }
             }
         };
@@ -87,10 +107,74 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
     }
+
+    // --- SETTINGS BUTTON ---
+    const btnSettings = document.getElementById('btn-settings');
+    if (btnSettings) {
+        btnSettings.onclick = () => {
+            playClick();
+            if (window.SettingsUI) window.SettingsUI.open();
+        };
+    }
+
+    // --- TRADE BUTTON ---
+    const btnTrade = document.getElementById('btn-trade');
+    if (btnTrade) {
+        btnTrade.onclick = () => {
+            playClick();
+            if (window.TradeUI) window.TradeUI.open();
+        };
+    }
+
+    // --- PLAYERS DRAWER TOGGLE (mobile bottom sheet) ---
+    const playersShell = document.getElementById('players-shell');
+    const playersToggle = document.getElementById('players-toggle');
+    if (playersShell && playersToggle) {
+        playersToggle.addEventListener('click', () => {
+            const opened = playersShell.classList.toggle('is-open');
+            playersToggle.setAttribute('aria-expanded', String(opened));
+            playClick();
+        });
+    }
+
+    // --- KEYBOARD SHORTCUTS ---
+    document.addEventListener('keydown', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+        // Space = Roll
+        if (e.code === 'Space') {
+            const btn = document.getElementById('btn-roll');
+            if (btn && !btn.classList.contains('hidden')) {
+                e.preventDefault();
+                btn.click();
+            }
+        }
+        // E = End turn
+        if (e.key === 'e' || e.key === 'E') {
+            const btn = document.getElementById('btn-end');
+            if (btn && !btn.classList.contains('hidden')) btn.click();
+        }
+        // B = Buy
+        if (e.key === 'b' || e.key === 'B') {
+            const btn = document.getElementById('btn-buy');
+            if (btn && !btn.classList.contains('hidden')) btn.click();
+        }
+    });
 });
 
-// These functions need to be global as they are called by Game engine or inline HTML
-function logMsg(msg) {
+// --- UNIFIED NOTIFICATION HELPER (log + toast + haptic) ---
+export function notify(msg, opts = {}) {
+    if (typeof logMsg === 'function') logMsg(msg);
+    if (window.Toast && opts.toast !== false) {
+        const type = opts.type || 'info';
+        window.Toast.show(msg.replace(/<[^>]*>/g, ''), { type, ttl: opts.ttl });
+    }
+    if (window.Settings && opts.haptic) {
+        window.Settings.haptic(opts.haptic);
+    }
+}
+window.notify = notify;
+
+export function logMsg(msg) {
     const logEl = document.getElementById('game-log');
     if (!logEl) return;
     const div = document.createElement('div');
@@ -99,16 +183,18 @@ function logMsg(msg) {
     logEl.appendChild(div);
     logEl.scrollTop = logEl.scrollHeight;
 }
+window.logMsg = logMsg;
 
-window.updatePlayerUI = renderPlayerUI;
+export function updatePlayerUI() { renderPlayerUI(); }
+window.updatePlayerUI = updatePlayerUI;
 
-function renderPlayerUI() {
+export function renderPlayerUI() {
     const playersContainer = document.getElementById('players-container');
-    if (!window.players || !playersContainer) return;
+    if (!window.players || !playersContainer || !window.Game) return;
     playersContainer.innerHTML = '';
     
     window.players.forEach((p, idx) => {
-        const isCurrent = (Game.currentPlayerIndex === idx && !p.bankrupt);
+        const isCurrent = (window.Game.currentPlayerIndex === idx && !p.bankrupt);
         const card = document.createElement('div');
         
         card.className = `glass-panel p-5 w-72 border-l-[12px] transition-all duration-500 flex flex-col gap-1 ${p.bankrupt ? 'opacity-40 grayscale scale-95' : 'shadow-xl'}`;
@@ -118,9 +204,12 @@ function renderPlayerUI() {
             card.classList.add('ring-4', 'ring-white/50', 'scale-105', 'z-20', 'bg-white/60');
         }
 
+        const stats = computePlayerStats(p);
+        const tokenLabel = p.tokenKind ? `<span class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-2">${p.tokenKind}</span>` : '';
+
         card.innerHTML = `
             <div class="flex justify-between items-center">
-                <span class="font-black text-slate-900 text-lg truncate">${p.name} ${p.isBot ? '🤖' : '👤'}</span>
+                <span class="font-black text-slate-900 text-lg truncate">${p.name} ${p.isBot ? '🤖' : '👤'}${tokenLabel}</span>
                 <span class="text-[10px] font-black px-2 py-1 bg-black/10 rounded-lg uppercase tracking-widest">${p.position} / 40</span>
             </div>
             <div class="text-3xl font-black text-indigo-700 my-1">${Utils.formatMoney(p.money)}</div>
@@ -141,12 +230,19 @@ function renderPlayerUI() {
                     </div>
                 ` : ''}
             </div>
+            ${(!p.isBot || isCurrent) ? `
+            <div class="stats-panel" aria-label="Thống kê người chơi">
+                <div class="stat"><span>Giá trị tài sản</span><strong>${Utils.formatMoney(stats.netWorth)}</strong></div>
+                <div class="stat"><span>Đất sở hữu</span><strong>${stats.propsCount}</strong></div>
+                <div class="stat"><span>Bộ màu hoàn chỉnh</span><strong>${stats.colorGroups}</strong></div>
+            </div>` : ''}
         `;
         playersContainer.appendChild(card);
     });
 }
+window.renderPlayerUI = renderPlayerUI;
 
-function showModal(title, desc, buttons = []) {
+export function showModal(title, desc, buttons = []) {
     const actionModal = document.getElementById('action-modal');
     const modalTitle = document.getElementById('modal-title');
     const modalDesc = document.getElementById('modal-desc');
@@ -155,11 +251,14 @@ function showModal(title, desc, buttons = []) {
 
     modalTitle.innerText = title;
     modalDesc.innerText = desc;
-    
-    // Reset buttons
+
+    // Reset buttons (also strip any prior suggested-action indicator)
     ['btn-roll', 'btn-build-menu', 'btn-buy', 'btn-skip', 'btn-end'].forEach(id => {
         const b = document.getElementById(id);
-        if (b) b.classList.add('hidden');
+        if (b) {
+            b.classList.add('hidden');
+            b.classList.remove('suggest-pulse');
+        }
     });
     if (buildSubmenu) buildSubmenu.classList.add('hidden');
 
@@ -168,12 +267,41 @@ function showModal(title, desc, buttons = []) {
         if (b) b.classList.remove('hidden');
     });
 
+    // Suggest first visible button — only while tutorial hasn't been completed
+    if (window.Tutorial && window.Tutorial.shouldShow() && buttons.length > 0) {
+        const first = document.getElementById('btn-' + buttons[0]);
+        if (first) first.classList.add('suggest-pulse');
+    }
+
     actionModal.classList.remove('hidden');
-    actionModal.offsetHeight; 
+    actionModal.offsetHeight;
     actionModal.classList.remove('scale-0');
 }
+window.showModal = showModal;
 
-function hideModal() {
+export function computePlayerStats(p) {
+    const owned = boardData.filter(t => t.owner === p.id);
+    const propsCount = owned.length;
+    let propsValue = 0;
+    let housesValue = 0;
+    owned.forEach(t => {
+        propsValue += t.isMortgaged ? Math.floor((t.price || 0) * 0.5) : (t.price || 0);
+        if (t.houses > 0 && t.houseCost) housesValue += t.houses * Math.floor(t.houseCost / 2);
+    });
+    const netWorth = p.money + propsValue + housesValue;
+    // Color groups (full sets owned)
+    const groupSets = {};
+    boardData.filter(t => t.groupId).forEach(t => {
+        if (!groupSets[t.groupId]) groupSets[t.groupId] = { total: 0, owned: 0 };
+        groupSets[t.groupId].total++;
+        if (t.owner === p.id) groupSets[t.groupId].owned++;
+    });
+    const colorGroups = Object.values(groupSets).filter(g => g.owned === g.total && g.total > 1).length;
+    return { netWorth, propsCount, colorGroups };
+}
+window.computePlayerStats = computePlayerStats;
+
+export function hideModal() {
     const actionModal = document.getElementById('action-modal');
     if (!actionModal) return;
     actionModal.classList.add('scale-0');
@@ -181,11 +309,12 @@ function hideModal() {
         if (actionModal.classList.contains('scale-0')) actionModal.classList.add('hidden');
     }, 500);
 }
+window.hideModal = hideModal;
 
-function renderMortgagePanel() {
+export function renderMortgagePanel() {
     const mortgagePanel = document.getElementById('mortgage-panel');
-    if (!mortgagePanel) return;
-    const p = Game.players[Game.currentPlayerIndex];
+    if (!mortgagePanel || !window.Game) return;
+    const p = window.Game.players[window.Game.currentPlayerIndex];
     if (!p || p.isBot) {
         mortgagePanel.innerHTML = `<div class="p-6 text-center text-slate-500 text-[10px] font-black uppercase">Không phải lượt của bạn</div>`;
         return;
@@ -208,7 +337,7 @@ function renderMortgagePanel() {
                         </div>
                     </div>
                     ${t.houses === 0 ? `
-                        <button onclick="toggleMortgage(${t.id}); renderMortgagePanel();" 
+                        <button onclick="window.toggleMortgage(${t.id}); window.renderMortgagePanel();" 
                             class="${t.isMortgaged ? 'bg-emerald-600' : 'bg-amber-600'} text-white text-[9px] font-black py-2 px-3 rounded-lg transition-all uppercase whitespace-nowrap">
                             ${t.isMortgaged ? 'Chuộc $' + Math.floor(t.price * 0.6) : 'Cầm $' + Math.floor(t.price * 0.5)}
                         </button>
@@ -218,11 +347,12 @@ function renderMortgagePanel() {
         </div>
     `;
 }
+window.renderMortgagePanel = renderMortgagePanel;
 
-function renderBuildMenu() {
+export function renderBuildMenu() {
     const buildSubmenu = document.getElementById('build-submenu');
-    if (!buildSubmenu) return;
-    const p = Game.players[Game.currentPlayerIndex];
+    if (!buildSubmenu || !window.Game) return;
+    const p = window.Game.players[window.Game.currentPlayerIndex];
     if (!p) return;
     const buildables = window.getBuildableProperties ? window.getBuildableProperties(p.id) : [];
     const allOwned = boardData.filter(t => t.owner === p.id);
@@ -244,7 +374,7 @@ function renderBuildMenu() {
                     </div>
                     <div class="flex gap-2">
                         ${buildables.includes(t) && !t.isMortgaged ? `
-                            <button onclick="Game.executeBuildInternal(Game.players[${p.id}], boardData[${t.id}])" class="flex-1 bg-slate-900 hover:bg-indigo-600 text-white text-[9px] font-black py-2 rounded-lg transition-all">XÂY NÀY ($${t.houseCost})</button>
+                            <button onclick="window.Game.executeBuildInternal(window.Game.players[${p.id}], window.boardData[${t.id}])" class="flex-1 bg-slate-900 hover:bg-indigo-600 text-white text-[9px] font-black py-2 rounded-lg transition-all">XÂY NÀY ($${t.houseCost})</button>
                         ` : ''}
                     </div>
                 </div>
@@ -252,3 +382,4 @@ function renderBuildMenu() {
         </div>
     `;
 }
+window.renderBuildMenu = renderBuildMenu;
