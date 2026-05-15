@@ -42,19 +42,23 @@
         }
     });
 
-    // FPS counter via rAF
-    let frames = 0, lastTime = performance.now();
-    function fpsTick() {
-        frames++;
-        const now = performance.now();
-        if (now - lastTime >= 1000) {
-            metrics.fps = Math.round((frames * 1000) / (now - lastTime));
-            frames = 0; lastTime = now;
-            updateHUD();
+    // FPS counter via rAF — opt-in via ?debug=1 or localStorage flag to avoid
+    // pinning the main thread during normal play (otherwise it inflates TBT).
+    function startFpsTick() {
+        let frames = 0, lastTime = performance.now();
+        function tick() {
+            frames++;
+            const now = performance.now();
+            if (now - lastTime >= 1000) {
+                metrics.fps = Math.round((frames * 1000) / (now - lastTime));
+                frames = 0; lastTime = now;
+                updateHUD();
+            }
+            requestAnimationFrame(tick);
         }
-        requestAnimationFrame(fpsTick);
+        requestAnimationFrame(tick);
     }
-    requestAnimationFrame(fpsTick);
+    if (isHudOn()) startFpsTick();
 
     // Report 5s after first paint
     setTimeout(reportToConsole, 5000);

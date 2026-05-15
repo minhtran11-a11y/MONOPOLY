@@ -173,5 +173,10 @@
         }).catch(() => false);
     }
 
-    window.DicePhysics = { ensureReady, roll };
+    // Synchronous check: are we ready to roll right now, no waiting?
+    function isReady() {
+        return initialized && !!window.CANNON;
+    }
+
+    window.DicePhysics = { ensureReady, roll, isReady };
 })();

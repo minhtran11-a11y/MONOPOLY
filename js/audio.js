@@ -1,10 +1,16 @@
 // --- WEB AUDIO API SOUND SYSTEM (with volume channels + BGM) ---
+// AudioContext is created lazily on first sound to avoid blocking initial
+// page render (~225ms saved on LCP/FCP).
 let audioCtx;
-try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (AudioContextClass) audioCtx = new AudioContextClass();
-} catch (e) {
-    console.error("AudioContext not supported", e);
+function _ensureCtx() {
+    if (audioCtx !== undefined) return audioCtx;
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = AudioContextClass ? new AudioContextClass() : null;
+    } catch (e) {
+        audioCtx = null;
+    }
+    return audioCtx;
 }
 
 const AUDIO_SETTINGS_KEY = 'monopoly3d_audio_v1';
@@ -34,6 +40,7 @@ let _sfxGain = null;
 let _bgmGain = null;
 
 function _ensureGraph() {
+    _ensureCtx();
     if (!audioCtx || _masterGain) return;
     _masterGain = audioCtx.createGain();
     _sfxGain = audioCtx.createGain();
@@ -59,8 +66,8 @@ function _resumeCtx() {
 // --- BGM: ambient pad loop generated procedurally ---
 let _bgmNodes = null;
 function _startBGM() {
-    if (!audioCtx || _bgmNodes) return;
     _ensureGraph();
+    if (!audioCtx || _bgmNodes) return;
     _resumeCtx();
 
     // Simple 3-oscillator ambient pad (C-E-G minor-ish chord with subtle modulation)
@@ -108,9 +115,9 @@ function _stopBGM() {
 
 const SoundFX = {
     playTone(frequency, type, duration, vol = 0.1) {
+        _ensureGraph();
         if (!audioCtx) return;
         _resumeCtx();
-        _ensureGraph();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = type;

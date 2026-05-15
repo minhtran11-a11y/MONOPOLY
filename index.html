@@ -11,11 +11,13 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23ef4444'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-size='36' fill='white' font-family='Arial' font-weight='900'%3E%24%3C/text%3E%3C/svg%3E">
     <title>Cờ Tỷ Phú 3D - Phiên Bản Cao Cấp</title>
 
-    <!-- Google Fonts — preconnect + slim weight subset with display=swap to
-         avoid layout shifts. Only 3 weights instead of 12 (cuts wasted bytes). -->
+    <!-- Google Fonts loaded non-blocking via preload+onload trick.
+         display=optional = browser uses fallback immediately and only swaps
+         if the font arrives within ~100ms — avoids CLS while keeping LCP fast. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700;900&display=optional" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700;900&display=optional" rel="stylesheet"></noscript>
 
     <!-- Critical inline CSS so the intro screen renders before Tailwind/style.css
          finish loading — keeps LCP fast without a build step. Tailwind enhances
@@ -25,7 +27,7 @@
         #main-menu-layer { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: #020617; }
         #screen-intro { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; }
         #menu-logo-canvas { width: 320px; height: 320px; margin-bottom: 2rem; }
-        #btn-start-game { padding: 1.5rem 4rem; background: #fff; color: #0f172a; font-weight: 900; font-size: 1.5rem; letter-spacing: 0.3em; text-transform: uppercase; border-radius: 999px; border: 0; cursor: pointer; box-shadow: 0 0 30px rgba(255,255,255,0.3); }
+        #btn-start-game { padding: 1.5rem 4rem; background: #fff; color: #0f172a; font-weight: 900; font-size: 1.5rem; letter-spacing: 0.3em; text-transform: uppercase; border-radius: 999px; border: 0; cursor: pointer; box-shadow: 0 0 30px rgba(255,255,255,0.3); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
         #btn-resume-game { display: none; margin-top: 1rem; padding: 0.75rem 2.5rem; background: rgba(16, 185, 129, 0.8); color: #fff; font-weight: 900; font-size: 0.875rem; letter-spacing: 0.25em; text-transform: uppercase; border-radius: 999px; border: 0; cursor: pointer; }
         .menu-screen.hidden { display: none; }
         #canvas-container, #money-bg, #game-ui-layer { position: fixed; inset: 0; }
