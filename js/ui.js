@@ -23,11 +23,13 @@ document.addEventListener('DOMContentLoaded', () => {
     window.closeRules = () => {
         playClick();
         if (rulesModal) rulesModal.classList.add('hidden');
+        document.body.classList.remove('modal-open');
     };
 
     window.showRules = () => {
         playClick();
         if (rulesModal) rulesModal.classList.remove('hidden');
+        document.body.classList.add('modal-open');
     };
 
     const btnShowRules = document.getElementById('btn-show-rules');
@@ -102,7 +104,71 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
     }
+
+    // --- SETTINGS BUTTON ---
+    const btnSettings = document.getElementById('btn-settings');
+    if (btnSettings) {
+        btnSettings.onclick = () => {
+            playClick();
+            if (window.SettingsUI) window.SettingsUI.open();
+        };
+    }
+
+    // --- TRADE BUTTON ---
+    const btnTrade = document.getElementById('btn-trade');
+    if (btnTrade) {
+        btnTrade.onclick = () => {
+            playClick();
+            if (window.TradeUI) window.TradeUI.open();
+        };
+    }
+
+    // --- PLAYERS DRAWER TOGGLE (mobile bottom sheet) ---
+    const playersShell = document.getElementById('players-shell');
+    const playersToggle = document.getElementById('players-toggle');
+    if (playersShell && playersToggle) {
+        playersToggle.addEventListener('click', () => {
+            const opened = playersShell.classList.toggle('is-open');
+            playersToggle.setAttribute('aria-expanded', String(opened));
+            playClick();
+        });
+    }
+
+    // --- KEYBOARD SHORTCUTS ---
+    document.addEventListener('keydown', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+        // Space = Roll
+        if (e.code === 'Space') {
+            const btn = document.getElementById('btn-roll');
+            if (btn && !btn.classList.contains('hidden')) {
+                e.preventDefault();
+                btn.click();
+            }
+        }
+        // E = End turn
+        if (e.key === 'e' || e.key === 'E') {
+            const btn = document.getElementById('btn-end');
+            if (btn && !btn.classList.contains('hidden')) btn.click();
+        }
+        // B = Buy
+        if (e.key === 'b' || e.key === 'B') {
+            const btn = document.getElementById('btn-buy');
+            if (btn && !btn.classList.contains('hidden')) btn.click();
+        }
+    });
 });
+
+// --- UNIFIED NOTIFICATION HELPER (log + toast + haptic) ---
+window.notify = function (msg, opts = {}) {
+    if (typeof logMsg === 'function') logMsg(msg);
+    if (window.Toast && opts.toast !== false) {
+        const type = opts.type || 'info';
+        window.Toast.show(msg.replace(/<[^>]*>/g, ''), { type, ttl: opts.ttl });
+    }
+    if (window.Settings && opts.haptic) {
+        window.Settings.haptic(opts.haptic);
+    }
+};
 
 // These functions need to be global as they are called by Game engine or inline HTML
 function logMsg(msg) {
@@ -114,6 +180,10 @@ function logMsg(msg) {
     logEl.appendChild(div);
     logEl.scrollTop = logEl.scrollHeight;
 }
+
+// Alias kept for backwards compatibility — game.js calls this name.
+function updatePlayerUI() { renderPlayerUI(); }
+window.updatePlayerUI = updatePlayerUI;
 
 function renderPlayerUI() {
     const playersContainer = document.getElementById('players-container');
@@ -131,9 +201,12 @@ function renderPlayerUI() {
             card.classList.add('ring-4', 'ring-white/50', 'scale-105', 'z-20', 'bg-white/60');
         }
 
+        const stats = computePlayerStats(p);
+        const tokenLabel = p.tokenKind ? `<span class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-2">${p.tokenKind}</span>` : '';
+
         card.innerHTML = `
             <div class="flex justify-between items-center">
-                <span class="font-black text-slate-900 text-lg truncate">${p.name} ${p.isBot ? '🤖' : '👤'}</span>
+                <span class="font-black text-slate-900 text-lg truncate">${p.name} ${p.isBot ? '🤖' : '👤'}${tokenLabel}</span>
                 <span class="text-[10px] font-black px-2 py-1 bg-black/10 rounded-lg uppercase tracking-widest">${p.position} / 40</span>
             </div>
             <div class="text-3xl font-black text-indigo-700 my-1">${Utils.formatMoney(p.money)}</div>
@@ -154,6 +227,12 @@ function renderPlayerUI() {
                     </div>
                 ` : ''}
             </div>
+            ${(!p.isBot || isCurrent) ? `
+            <div class="stats-panel" aria-label="Thống kê người chơi">
+                <div class="stat"><span>Giá trị tài sản</span><strong>${Utils.formatMoney(stats.netWorth)}</strong></div>
+                <div class="stat"><span>Đất sở hữu</span><strong>${stats.propsCount}</strong></div>
+                <div class="stat"><span>Bộ màu hoàn chỉnh</span><strong>${stats.colorGroups}</strong></div>
+            </div>` : ''}
         `;
         playersContainer.appendChild(card);
     });
@@ -168,11 +247,14 @@ function showModal(title, desc, buttons = []) {
 
     modalTitle.innerText = title;
     modalDesc.innerText = desc;
-    
-    // Reset buttons
+
+    // Reset buttons (also strip any prior suggested-action indicator)
     ['btn-roll', 'btn-build-menu', 'btn-buy', 'btn-skip', 'btn-end'].forEach(id => {
         const b = document.getElementById(id);
-        if (b) b.classList.add('hidden');
+        if (b) {
+            b.classList.add('hidden');
+            b.classList.remove('suggest-pulse');
+        }
     });
     if (buildSubmenu) buildSubmenu.classList.add('hidden');
 
@@ -181,9 +263,37 @@ function showModal(title, desc, buttons = []) {
         if (b) b.classList.remove('hidden');
     });
 
+    // Suggest first visible button — only while tutorial hasn't been completed
+    // (so seasoned players don't get a distracting pulse forever).
+    if (window.Tutorial && window.Tutorial.shouldShow() && buttons.length > 0) {
+        const first = document.getElementById('btn-' + buttons[0]);
+        if (first) first.classList.add('suggest-pulse');
+    }
+
     actionModal.classList.remove('hidden');
-    actionModal.offsetHeight; 
+    actionModal.offsetHeight;
     actionModal.classList.remove('scale-0');
+}
+
+function computePlayerStats(p) {
+    const owned = boardData.filter(t => t.owner === p.id);
+    const propsCount = owned.length;
+    let propsValue = 0;
+    let housesValue = 0;
+    owned.forEach(t => {
+        propsValue += t.isMortgaged ? Math.floor((t.price || 0) * 0.5) : (t.price || 0);
+        if (t.houses > 0 && t.houseCost) housesValue += t.houses * Math.floor(t.houseCost / 2);
+    });
+    const netWorth = p.money + propsValue + housesValue;
+    // Color groups (full sets owned)
+    const groupSets = {};
+    boardData.filter(t => t.groupId).forEach(t => {
+        if (!groupSets[t.groupId]) groupSets[t.groupId] = { total: 0, owned: 0 };
+        groupSets[t.groupId].total++;
+        if (t.owner === p.id) groupSets[t.groupId].owned++;
+    });
+    const colorGroups = Object.values(groupSets).filter(g => g.owned === g.total && g.total > 1).length;
+    return { netWorth, propsCount, colorGroups };
 }
 
 function hideModal() {
