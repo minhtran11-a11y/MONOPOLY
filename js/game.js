@@ -37,7 +37,7 @@ const Game = {
         
         renderPlayerUI();
         logEl.innerHTML = '';
-        logMsg(`Chào mừng bạn đến với Cờ Tỷ Phú! Mỗi người nhận được ${Utils.formatMoney(GAME_CONFIG.START_MONEY)}.`);
+        logMsg(`Chào mừng bạn đến với Monopoly! Mỗi người nhận được ${Utils.formatMoney(GAME_CONFIG.START_MONEY)}.`);
         logMsg(`🎲 Đã tung xúc xắc quyết định: ${startPlayer.name} được đi trước!`);
         
         this.startTurn();
@@ -545,37 +545,39 @@ const Game = {
 window.initGameSession = (total, mode) => Game.init(total, mode);
 
 // --- ROLL BUTTON BINDING ---
-btnRoll.onclick = () => {
-    if (window.isAnimating) return;
-    hideModal();
-    const p = Game.players[Game.currentPlayerIndex];
-    let d1 = Math.floor(Math.random() * 6) + 1;
-    let d2 = Math.floor(Math.random() * 6) + 1;
-    let total = d1 + d2;
-    let isDouble = (d1 === d2);
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('btn-roll').onclick = () => {
+        if (window.isAnimating) return;
+        hideModal();
+        const p = Game.players[Game.currentPlayerIndex];
+        let d1 = Math.floor(Math.random() * 6) + 1;
+        let d2 = Math.floor(Math.random() * 6) + 1;
+        let total = d1 + d2;
+        let isDouble = (d1 === d2);
 
-    if(window.SoundFX) window.SoundFX.roll();
-    rollDiceAnimation(d1, d2, () => {
-        logMsg(`🎲 ${p.name} đổ được ${total} (${d1} & ${d2})`);
-        if (p.inJail) {
-            if (p.jailFreeCards > 0) {
-                p.jailFreeCards--;
-                p.inJail = false; p.jailTurns = 0;
-                logMsg(`🔓 ${p.name} đã sử dụng thẻ "Mãn Hạn Tù" để thoát!`);
-                Game.movePlayerAnim(p, total, false);
-            } else if (isDouble) {
-                logMsg(`🔓 ${p.name} đổ được đôi ${d1}-${d2} và đã thoát tù!`);
-                p.inJail = false; p.jailTurns = 0;
-                Game.movePlayerAnim(p, total, false);
+        if(window.SoundFX) window.SoundFX.roll();
+        rollDiceAnimation(d1, d2, () => {
+            logMsg(`🎲 ${p.name} đổ được ${total} (${d1} & ${d2})`);
+            if (p.inJail) {
+                if (p.jailFreeCards > 0) {
+                    p.jailFreeCards--;
+                    p.inJail = false; p.jailTurns = 0;
+                    logMsg(`🔓 ${p.name} đã sử dụng thẻ "Mãn Hạn Tù" để thoát!`);
+                    Game.movePlayerAnim(p, total, false);
+                } else if (isDouble) {
+                    logMsg(`🔓 ${p.name} đổ được đôi ${d1}-${d2} và đã thoát tù!`);
+                    p.inJail = false; p.jailTurns = 0;
+                    Game.movePlayerAnim(p, total, false);
+                } else {
+                    logMsg(`🔒 ${p.name} không đổ được đôi. Tiếp tục ở lại tù.`);
+                    Game.checkEndTurnPhase(false);
+                }
             } else {
-                logMsg(`🔒 ${p.name} không đổ được đôi. Tiếp tục ở lại tù.`);
-                Game.checkEndTurnPhase(false);
+                Game.movePlayerAnim(p, total, isDouble);
             }
-        } else {
-            Game.movePlayerAnim(p, total, isDouble);
-        }
-    });
-};
+        });
+    };
+});
 
 window.executeBuild = (tileId) => {
     const p = Game.players[Game.currentPlayerIndex];
@@ -589,4 +591,88 @@ window.executeBuild = (tileId) => {
         update3DHouses(tileId);
         renderBuildMenu();
     }
+};
+
+window.calculateRent = function(tile) {
+    if (tile.type === TILE_TYPES.PROPERTY) {
+        if (tile.houses === 0) {
+            if (tile.owner !== null) {
+                const groupTiles = boardData.filter(t => t.groupId === tile.groupId);
+                const allOwned = groupTiles.every(t => t.owner === tile.owner);
+                if (allOwned) return tile.rent * 2;
+            }
+            return tile.rent;
+        } else if (tile.houses === 1) return tile.rent * 5;
+        else if (tile.houses === 2) return tile.rent * 15;
+        else if (tile.houses === 3) return tile.rent * 40;
+        else if (tile.houses === 4) return tile.rent * 60;
+        else if (tile.houses === 5) return tile.rent * 80;
+    } else if (tile.type === TILE_TYPES.RAILROAD) {
+        if (tile.owner !== null) {
+            const railroadsOwned = boardData.filter(t => t.type === TILE_TYPES.RAILROAD && t.owner === tile.owner).length;
+            return railroadsOwned > 0 ? 25 * Math.pow(2, railroadsOwned - 1) : tile.rent;
+        }
+        return tile.rent;
+    } else if (tile.type === TILE_TYPES.UTILITY) {
+        if (tile.owner !== null) {
+            const utilitiesOwned = boardData.filter(t => t.type === TILE_TYPES.UTILITY && t.owner === tile.owner).length;
+            return utilitiesOwned === 2 ? 100 : 40;
+        }
+        return tile.rent;
+    }
+    return 0;
+};
+
+window.getBuildableProperties = function(playerId) {
+    const buildables = [];
+    const groups = {};
+    boardData.forEach(t => {
+        if (t.type === TILE_TYPES.PROPERTY) {
+            if (!groups[t.groupId]) groups[t.groupId] = [];
+            groups[t.groupId].push(t);
+        }
+    });
+
+    for (let groupId in groups) {
+        const groupTiles = groups[groupId];
+        const allOwnedByPlayer = groupTiles.every(t => t.owner === playerId && !t.isMortgaged);
+        if (allOwnedByPlayer) {
+            const minHouses = Math.min(...groupTiles.map(t => t.houses || 0));
+            groupTiles.forEach(t => {
+                if ((t.houses || 0) === minHouses && (t.houses || 0) < 5) {
+                    buildables.push(t);
+                }
+            });
+        }
+    }
+    return buildables;
+};
+
+window.toggleMortgage = function(tileId) {
+    const tile = boardData[tileId];
+    if (!tile) return;
+    const p = Game.players[tile.owner];
+    if (!p) return;
+    
+    if (tile.houses > 0) {
+        alert("Phải bán hết nhà trên đất này trước khi cầm cố!");
+        return;
+    }
+    
+    if (tile.isMortgaged) {
+        const cost = Math.floor(tile.price * 0.6);
+        if (p.money >= cost) {
+            p.money -= cost;
+            tile.isMortgaged = false;
+            logMsg(`🏦 ${p.name} đã chuộc lại ${tile.name} với giá ${Utils.formatMoney(cost)}.`);
+        } else {
+            alert("Không đủ tiền chuộc!");
+        }
+    } else {
+        const value = Math.floor(tile.price * 0.5);
+        p.money += value;
+        tile.isMortgaged = true;
+        logMsg(`🏦 ${p.name} đã cầm cố ${tile.name} lấy ${Utils.formatMoney(value)}.`);
+    }
+    if (window.updatePlayerUI) window.updatePlayerUI();
 };

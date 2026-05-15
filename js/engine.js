@@ -45,7 +45,7 @@ function createCenterLogo() {
     ctx.font = '900 160px "Be Vietnam Pro", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('CỜ TỶ PHÚ', 512, 450);
+    ctx.fillText('MONOPOLY', 512, 450);
     
     // Subtext
     ctx.shadowBlur = 10;

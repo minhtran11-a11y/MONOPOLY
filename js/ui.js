@@ -1,18 +1,18 @@
 // --- UI MANAGER ---
 document.addEventListener('DOMContentLoaded', () => {
-    const logEl = document.getElementById('game-log');
-    const playersContainer = document.getElementById('players-container');
-    const actionModal = document.getElementById('action-modal');
-    const modalTitle = document.getElementById('modal-title');
-    const modalDesc = document.getElementById('modal-desc');
-    const btnRoll = document.getElementById('btn-roll');
-    const btnBuildMenu = document.getElementById('btn-build-menu');
-    const btnBuy = document.getElementById('btn-buy');
-    const btnSkip = document.getElementById('btn-skip');
-    const btnEnd = document.getElementById('btn-end');
-    const buildSubmenu = document.getElementById('build-submenu');
-    const rulesModal = document.getElementById('rules-modal');
-    const mortgagePanel = document.getElementById('mortgage-panel');
+    window.logEl = document.getElementById('game-log');
+    window.playersContainer = document.getElementById('players-container');
+    window.actionModal = document.getElementById('action-modal');
+    window.modalTitle = document.getElementById('modal-title');
+    window.modalDesc = document.getElementById('modal-desc');
+    window.btnRoll = document.getElementById('btn-roll');
+    window.btnBuildMenu = document.getElementById('btn-build-menu');
+    window.btnBuy = document.getElementById('btn-buy');
+    window.btnSkip = document.getElementById('btn-skip');
+    window.btnEnd = document.getElementById('btn-end');
+    window.buildSubmenu = document.getElementById('build-submenu');
+    window.rulesModal = document.getElementById('rules-modal');
+    window.mortgagePanel = document.getElementById('mortgage-panel');
 
     // Helper to play click sound
     const playClick = () => { if(window.SoundFX) window.SoundFX.click(); };
@@ -99,6 +99,8 @@ function logMsg(msg) {
     logEl.appendChild(div);
     logEl.scrollTop = logEl.scrollHeight;
 }
+
+window.updatePlayerUI = renderPlayerUI;
 
 function renderPlayerUI() {
     const playersContainer = document.getElementById('players-container');
@@ -222,7 +224,7 @@ function renderBuildMenu() {
     if (!buildSubmenu) return;
     const p = Game.players[Game.currentPlayerIndex];
     if (!p) return;
-    const buildables = Game.getBuildableProperties ? Game.getBuildableProperties(p.id) : [];
+    const buildables = window.getBuildableProperties ? window.getBuildableProperties(p.id) : [];
     const allOwned = boardData.filter(t => t.owner === p.id);
     
     buildSubmenu.innerHTML = `
