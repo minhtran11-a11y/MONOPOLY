@@ -49,11 +49,10 @@ function rollDiceAnimation(d1, d2, callback) {
         }, isDouble ? 1500 : 1000);
     }
 
-    // ---- Try cannon.js physics ONLY if already loaded.
-    // Don't make the user wait on first roll while cannon.js downloads — start
-    // pseudo-physics immediately so the dice are always visibly tumbling. We
-    // also kick off the cannon.js download in the background for subsequent rolls.
-    const physicsReady = !reduced && window.DicePhysics && window.DicePhysics.isReady && window.DicePhysics.isReady();
+    // Cannon.js physics path is opt-in via ?physics=1 — the inline pseudo-physics
+    // below is more reliable (looks great + bounds dice to camera view).
+    const wantPhysics = /[?&]physics=1/.test(location.search);
+    const physicsReady = wantPhysics && !reduced && window.DicePhysics && window.DicePhysics.isReady && window.DicePhysics.isReady();
     if (physicsReady) {
         const ticker = setInterval(() => {
             d1ui.innerText = Math.floor(Math.random() * 6) + 1;
@@ -66,10 +65,7 @@ function rollDiceAnimation(d1, d2, callback) {
         });
         return;
     }
-    // Kick off async load so the NEXT roll can use physics.
-    if (!reduced && window.DicePhysics && window.DicePhysics.ensureReady) {
-        window.DicePhysics.ensureReady();
-    }
+    if (wantPhysics && !reduced && window.DicePhysics) window.DicePhysics.ensureReady();
     pseudoSim();
 
     // ---- Inline pseudo-physics ----
@@ -90,6 +86,7 @@ function rollDiceAnimation(d1, d2, callback) {
         const MAX_FRAMES = 110;
         let frame = 0;
 
+        const WALL_X = 8, WALL_Z = 8; // soft walls keep dice on camera
         function simulateFrame() {
             const slowMo = isDouble && frame > 50 ? 0.45 : 1.0;
             state.forEach(s => {
@@ -97,11 +94,21 @@ function rollDiceAnimation(d1, d2, callback) {
                 s.mesh.position.x += s.vx * slowMo;
                 s.mesh.position.y += s.vy * slowMo;
                 s.mesh.position.z += s.vz * slowMo;
+                // Floor bounce
                 if (s.mesh.position.y <= FLOOR_Y) {
                     s.mesh.position.y = FLOOR_Y;
                     s.vy = -s.vy * BOUNCE_DAMP;
                     s.vx *= 0.85; s.vz *= 0.85;
                     s.ax *= ANG_DAMP; s.ay *= ANG_DAMP; s.az *= ANG_DAMP;
+                }
+                // Wall bounces — clamp dice inside ±WALL_X / ±WALL_Z so they stay visible
+                if (Math.abs(s.mesh.position.x) > WALL_X) {
+                    s.mesh.position.x = Math.sign(s.mesh.position.x) * WALL_X;
+                    s.vx = -s.vx * 0.6;
+                }
+                if (Math.abs(s.mesh.position.z) > WALL_Z) {
+                    s.mesh.position.z = Math.sign(s.mesh.position.z) * WALL_Z;
+                    s.vz = -s.vz * 0.6;
                 }
                 s.mesh.rotation.x += s.ax * slowMo;
                 s.mesh.rotation.y += s.ay * slowMo;
