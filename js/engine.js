@@ -4,8 +4,9 @@ let maxAnisotropy = 1;
 
 let isCameraAnimating = false;
 let cameraAnimConfig = null;
-let savedCameraPos = new THREE.Vector3();
-let savedCameraTarget = new THREE.Vector3();
+// Initialized lazily inside init3D() — THREE is loaded on demand to keep LCP fast.
+let savedCameraPos = null;
+let savedCameraTarget = null;
 
 let dice1, dice2;
 let chanceDeck, chestDeck;
@@ -345,10 +346,31 @@ function generateTileMaterials(tile, i) {
         ctx.lineWidth = 10; ctx.strokeStyle = '#cbd5e1'; ctx.strokeRect(0, 0, 300, 500);
     }
 
+    // Bake a vignette-style ambient-occlusion overlay onto the tile texture
+    // so edges/corners are darker, faking AO without a heavy SSAO pass.
+    {
+        const w = canvas.width, h = canvas.height;
+        const aoCtx = canvas.getContext('2d');
+        const grad = aoCtx.createRadialGradient(w/2, h/2, Math.min(w, h) * 0.25, w/2, h/2, Math.max(w, h) * 0.7);
+        grad.addColorStop(0,   'rgba(0,0,0,0)');
+        grad.addColorStop(0.7, 'rgba(0,0,0,0.0)');
+        grad.addColorStop(1,   'rgba(0,0,0,0.32)');
+        aoCtx.globalCompositeOperation = 'multiply';
+        aoCtx.fillStyle = grad;
+        aoCtx.fillRect(0, 0, w, h);
+        aoCtx.globalCompositeOperation = 'source-over';
+    }
+
     const texture = new THREE.CanvasTexture(canvas);
-    texture.anisotropy = maxAnisotropy; 
-    const sideMat = new THREE.MeshStandardMaterial({ color: baseColor, roughness: 0.9, metalness: 0.05 });
-    const topMat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.7, metalness: 0.1 });
+    texture.anisotropy = maxAnisotropy;
+    // PBR-ish: aoMap requires UV2; we baked into base map for simplicity.
+    const sideMat = new THREE.MeshStandardMaterial({
+        color: baseColor, roughness: 0.85, metalness: 0.08
+    });
+    const topMat = new THREE.MeshStandardMaterial({
+        map: texture, roughness: 0.55, metalness: 0.15,
+        envMapIntensity: 0.6
+    });
     return [sideMat, sideMat, topMat, sideMat, sideMat, sideMat];
 }
 
@@ -409,98 +431,6 @@ function createDice() {
     dice2.position.set(3, 10, 0); dice2.castShadow = true; dice2.visible = false; scene.add(dice2);
 }
 
-function createCitySkyline() {
-    const cityGroup = new THREE.Group();
-    const buildingCount = 60;
-    const colors = [0x1e293b, 0x0f172a, 0x1e1b4b, 0x312e81];
-
-    for (let i = 0; i < buildingCount; i++) {
-        const h = 20 + Math.random() * 60;
-        const w = 8 + Math.random() * 12;
-        const d = 8 + Math.random() * 12;
-        
-        const geo = new THREE.BoxGeometry(w, h, d);
-        const mat = new THREE.MeshStandardMaterial({
-            color: colors[Math.floor(Math.random() * colors.length)],
-            roughness: 0.2,
-            metalness: 0.5
-        });
-        
-        const building = new THREE.Mesh(geo, mat);
-        
-        // Position in a large circle far away
-        const angle = (i / buildingCount) * Math.PI * 2 + Math.random() * 0.5;
-        const radius = 180 + Math.random() * 50;
-        
-        building.position.set(
-            Math.cos(angle) * radius,
-            h / 2 - 20, // Slightly sunken
-            Math.sin(angle) * radius
-        );
-        
-        building.lookAt(0, building.position.y, 0);
-        
-        // Add random windows (emissive points)
-        const windowCount = 15;
-        const winGeo = new THREE.PlaneGeometry(0.8, 0.8);
-        const winMat = new THREE.MeshStandardMaterial({
-            color: 0xfde047,
-            emissive: 0xfde047,
-            emissiveIntensity: 2,
-            transparent: true,
-            opacity: 0.8
-        });
-
-        for (let j = 0; j < windowCount; j++) {
-            const win = new THREE.Mesh(winGeo, winMat);
-            // Random side
-            const face = Math.floor(Math.random() * 4);
-            const py = (Math.random() * h) - (h/2);
-            const px = (Math.random() * w) - (w/2);
-            
-            if (face === 0) win.position.set(px, py, d/2 + 0.1);
-            else if (face === 1) { win.position.set(px, py, -d/2 - 0.1); win.rotation.y = Math.PI; }
-            else if (face === 2) { win.position.set(w/2 + 0.1, py, px); win.rotation.y = Math.PI/2; }
-            else { win.position.set(-w/2 - 0.1, py, px); win.rotation.y = -Math.PI/2; }
-            
-            building.add(win);
-        }
-
-        cityGroup.add(building);
-    }
-    scene.add(cityGroup);
-
-    // Add Stars
-    const starGeo = new THREE.BufferGeometry();
-    const starCount = 2000;
-    const starPositions = new Float32Array(starCount * 3);
-    for (let i = 0; i < starCount * 3; i++) {
-        starPositions[i] = (Math.random() - 0.5) * 800;
-    }
-    starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.8, transparent: true, opacity: 0.8 });
-    stars = new THREE.Points(starGeo, starMat);
-    scene.add(stars);
-}
-
-function initPostProcessing() {
-    const renderScene = new THREE.RenderPass(scene, camera);
-
-    const bloomPass = new THREE.UnrealBloomPass(
-        new THREE.Vector2(window.innerWidth, window.innerHeight),
-        1.5,  // Strength
-        0.4,  // Radius
-        0.85  // Threshold
-    );
-    bloomPass.threshold = 0.85; // Very high threshold
-    bloomPass.strength = 0.4;  // Soft, subtle glow
-    bloomPass.radius = 0.3;
-
-    composer = new THREE.EffectComposer(renderer);
-    composer.addPass(renderScene);
-    composer.addPass(bloomPass);
-}
-
 function createDiceTexture(number) {
     const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
     const ctx = canvas.getContext('2d');
@@ -545,12 +475,37 @@ function createBuilding(isHotel) {
         );
         top.position.y = 2.2; top.castShadow = true; group.add(top);
 
-        // Decorative antenna/sign pole
+        // Flag pole + flag on roof
         const pole = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.05, 0.05, 0.8),
-            new THREE.MeshStandardMaterial({color: 0xcbd5e1, metalness: 0.8})
+            new THREE.CylinderGeometry(0.05, 0.05, 1.2),
+            new THREE.MeshStandardMaterial({color: 0xcbd5e1, metalness: 0.85, roughness: 0.2})
         );
-        pole.position.set(0.6, 2.6, 0.5); group.add(pole);
+        pole.position.set(-0.7, 3.0, 0.5); group.add(pole);
+
+        const flag = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.7, 0.45),
+            new THREE.MeshStandardMaterial({
+                color: 0xef4444, side: THREE.DoubleSide,
+                emissive: 0xef4444, emissiveIntensity: 0.4
+            })
+        );
+        flag.position.set(-0.35, 3.25, 0.5); group.add(flag);
+        // Gold star center on flag
+        const star = new THREE.Mesh(
+            new THREE.CircleGeometry(0.09, 5),
+            new THREE.MeshStandardMaterial({ color: 0xfde047, emissive: 0xfde047, emissiveIntensity: 1.4 })
+        );
+        star.position.set(-0.35, 3.25, 0.51); group.add(star);
+
+        // Neon "HOTEL" sign on top
+        const neonMat = new THREE.MeshStandardMaterial({
+            color: 0xfde047, emissive: 0xfde047, emissiveIntensity: 2.5
+        });
+        const neonStrip = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, 0.06), neonMat);
+        neonStrip.position.set(0, 2.55, 0.95); group.add(neonStrip);
+        const neonStrip2 = neonStrip.clone();
+        neonStrip2.position.z = -0.95; neonStrip2.rotation.y = Math.PI; group.add(neonStrip2);
+        group.userData.neonStrips = [neonStrip, neonStrip2];
 
         // Windows (many rows)
         const winMat = new THREE.MeshStandardMaterial({color: windowColor, emissive: windowColor, emissiveIntensity: 2.0});
@@ -605,24 +560,40 @@ function update3DHouses(tileIdx) {
     const tile = boardData[tileIdx];
     const tileMesh = boardMeshes[tileIdx];
 
+    const previousCount = (tile.houseMeshes && tile.houseMeshes.length) || 0;
     if (tile.houseMeshes) tile.houseMeshes.forEach(h => tileMesh.remove(h));
     tile.houseMeshes = [];
     if (tile.houses === 0) return;
 
-    const localZ = -3.8; 
+    const localZ = -3.8;
     const localY = 0.5;
+    const newestIdx = tile.houses - 1;
 
     if (tile.houses === 5) {
-        const hotel = createBuilding(true); hotel.position.set(0, localY, localZ);
+        const hotel = createBuilding(true);
+        hotel.position.set(0, localY, localZ);
         tileMesh.add(hotel); tile.houseMeshes.push(hotel);
+        if (tile.houses !== previousCount && window.Anim3D) {
+            window.Anim3D.growIn(hotel, 700);
+            window.Anim3D.dustBurst(tileMesh, 0, localY, localZ, 14);
+        }
     } else {
-        const spacing = 1.3; const startOffset = -((tile.houses - 1) * spacing) / 2;
+        const spacing = 1.3;
+        const startOffset = -((tile.houses - 1) * spacing) / 2;
         for (let k = 0; k < tile.houses; k++) {
-            const house = createBuilding(false); house.position.set(startOffset + k * spacing, localY, localZ);
+            const house = createBuilding(false);
+            const x = startOffset + k * spacing;
+            house.position.set(x, localY, localZ);
             tileMesh.add(house); tile.houseMeshes.push(house);
+            if (k === newestIdx && tile.houses > previousCount && window.Anim3D) {
+                window.Anim3D.growIn(house, 600);
+                window.Anim3D.dustBurst(tileMesh, x, localY, localZ, 8);
+            }
         }
     }
+    applyMortgageVisual(tileIdx);
 }
+
 
 function tweenCamera(endPos, endTarget, duration, callback) {
     if(controls) controls.enabled = false;
@@ -634,74 +605,7 @@ function tweenCamera(endPos, endTarget, duration, callback) {
     isCameraAnimating = true;
 }
 
-function rollDiceAnimation(d1, d2, callback) {
-    window.isAnimating = true;
-    dice1.visible = true; dice2.visible = true;
-    
-    // UI Feedback
-    const overlay = document.getElementById('dice-overlay');
-    const d1ui = document.getElementById('dice-1-ui');
-    const d2ui = document.getElementById('dice-2-ui');
-    
-    overlay.classList.remove('opacity-0', 'scale-50');
-    overlay.classList.add('opacity-100', 'scale-100');
-
-    // Random initial rotations
-    dice1.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
-    dice2.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
-
-    let startY = 22;
-    dice1.position.set(-5, startY, 0); dice2.position.set(5, startY, 0);
-
-    // Removed camera tweening during roll as requested
-    
-    let frame = 0; const maxFrames = 70;
-    function animateRoll() {
-        frame++;
-        if (frame < maxFrames - 5) {
-            let progress = frame / maxFrames;
-            dice1.position.y = Math.max(1.5, startY * (1 - progress) + Math.abs(Math.sin(frame*0.5)*8 * (1-progress)));
-            dice2.position.y = Math.max(1.5, startY * (1 - progress) + Math.abs(Math.sin(frame*0.5 + 1.2)*8 * (1-progress)));
-            
-            dice1.rotation.x += 0.6; dice1.rotation.y += 0.4; 
-            dice2.rotation.x += 0.4; dice2.rotation.z += 0.6;
-            
-            // Randomize UI during roll
-            if (frame % 5 === 0) {
-                d1ui.innerText = Math.floor(Math.random()*6)+1;
-                d2ui.innerText = Math.floor(Math.random()*6)+1;
-            }
-
-            requestAnimationFrame(animateRoll);
-        } else {
-            dice1.position.y = 1.5; dice2.position.y = 1.5;
-            d1ui.innerText = d1;
-            d2ui.innerText = d2;
-
-            const getRotationForFace = (num) => {
-                switch(num) {
-                    case 1: return {x:0, y:0, z:0}; case 6: return {x:Math.PI, y:0, z:0};
-                    case 2: return {x:0, y:0, z:Math.PI/2}; case 5: return {x:0, y:0, z:-Math.PI/2};
-                    case 3: return {x:-Math.PI/2, y:0, z:0}; case 4: return {x:Math.PI/2, y:0, z:0};
-                }
-            };
-            const r1 = getRotationForFace(d1); const r2 = getRotationForFace(d2);
-            dice1.rotation.set(r1.x, r1.y, r1.z); dice2.rotation.set(r2.x, r2.y, r2.z);
-
-            setTimeout(() => {
-                overlay.classList.add('opacity-0', 'scale-50');
-                overlay.classList.remove('opacity-100', 'scale-100');
-                
-                setTimeout(() => {
-                    dice1.visible = false; dice2.visible = false;
-                    window.isAnimating = false; 
-                    callback(); 
-                }, 500);
-            }, 1500); 
-        }
-    }
-    animateRoll();
-}
+// rollDiceAnimation lives in js/dice_anim.js to keep engine.js < 800 LOC.
 
 function showCardAnimation(type, desc, colorHex, sourceZ, callback) {
     isAnimating = true;
@@ -724,6 +628,8 @@ function showCardAnimation(type, desc, colorHex, sourceZ, callback) {
     cardMesh.rotation.set(0, 0, 0); // Face-up by default
     scene.add(cardMesh);
 
+    if (!savedCameraPos) savedCameraPos = new THREE.Vector3();
+    if (!savedCameraTarget) savedCameraTarget = new THREE.Vector3();
     savedCameraPos.copy(camera.position); savedCameraTarget.copy(controls.target);
 
     // Instant camera switch to top-down view
@@ -742,53 +648,43 @@ function createPlayers(total, mode) {
     if (window.players) window.players.forEach(p => { if(p.mesh) scene.remove(p.mesh); });
     window.players = [];
 
-    const pawnPoints = [];
-    for (let i = 0; i < 10; i++) {
-        pawnPoints.push(new THREE.Vector2(Math.sin(i * 0.2) * 1.5 + 0.5, (i * 0.4)));
-    }
-    // Better pawn profile
-    const points = [];
-    points.push(new THREE.Vector2(0, 0));
-    points.push(new THREE.Vector2(1.5, 0));
-    points.push(new THREE.Vector2(1.4, 0.4));
-    points.push(new THREE.Vector2(1.0, 0.6));
-    points.push(new THREE.Vector2(0.6, 2.2));
-    points.push(new THREE.Vector2(1.0, 2.4));
-    points.push(new THREE.Vector2(0.8, 2.6));
-    points.push(new THREE.Vector2(1.2, 3.2));
-    points.push(new THREE.Vector2(0, 4.0));
-    const pawnGeo = new THREE.LatheGeometry(points, 32);
-    
     for (let i = 0; i < total; i++) {
-        const mat = new THREE.MeshStandardMaterial({ 
-            color: PLAYER_COLORS[i], 
-            metalness: 0.6, 
-            roughness: 0.2,
-            emissive: PLAYER_COLORS[i],
-            emissiveIntensity: 0.2
-        });
-        const mesh = new THREE.Mesh(pawnGeo, mat);
-        
+        const colorHex = PLAYER_COLORS[i];
+        // Use Vietnam-themed token if factory is loaded; otherwise fall back to a basic mesh.
+        let mesh;
+        if (window.TokenFactory) {
+            mesh = window.TokenFactory.create(i, colorHex);
+        } else {
+            const fallbackGeo = new THREE.ConeGeometry(0.8, 2.4, 16);
+            mesh = new THREE.Mesh(fallbackGeo, new THREE.MeshStandardMaterial({ color: colorHex }));
+        }
+
         // Safety check for board initialization
         if (boardMeshes && boardMeshes[0]) {
             mesh.position.copy(boardMeshes[0].position);
         } else {
-            mesh.position.set(32, 1.0, 32); 
+            mesh.position.set(32, 1.0, 32);
         }
-        
         mesh.position.y = 1.0;
-        mesh.position.x += (i % 2 === 0 ? 1.5 : -1.5); 
+        mesh.position.x += (i % 2 === 0 ? 1.5 : -1.5);
         mesh.position.z += (i > 1 ? 1.5 : -1.5);
-        mesh.castShadow = true; 
+        mesh.castShadow = true;
+        // Tokens are oriented; rotate so they face inward toward center for variety
+        mesh.rotation.y = Math.PI * (i / total);
         scene.add(mesh);
 
-        let pName = mode === 'bot' ? (i === 0 ? "Bạn" : `NPC ${i}`) : (i === 0 ? "Bạn (P1)" : `Người chơi ${i+1}`);
-        let isBot = (mode === 'bot' && i > 0);
+        const pName = mode === 'bot'
+            ? (i === 0 ? "Bạn" : `NPC ${i}`)
+            : (i === 0 ? "Bạn (P1)" : `Người chơi ${i+1}`);
+        const isBot = (mode === 'bot' && i > 0);
+        const tokenKind = (window.TokenFactory && window.TokenFactory.NAMES) ? window.TokenFactory.NAMES[i % 4] : '';
 
         window.players.push({
-            id: i, name: pName, colorHex: PLAYER_HEX[i],
-            mesh: mesh, position: 0, money: GAME_CONFIG.START_MONEY, 
-            inJail: false, jailTurns: 0, jailFreeCards: 0, bankrupt: false, isBot: isBot
+            id: i, name: pName, colorHex: PLAYER_HEX[i], tokenKind,
+            mesh: mesh, position: 0, money: GAME_CONFIG.START_MONEY,
+            inJail: false, jailTurns: 0, jailFreeCards: 0, bankrupt: false, isBot: isBot,
+            // Animation state (squash/stretch, idle bobbing)
+            baseY: 1.0, hopT: 0, idleOffset: i * 0.4
         });
     }
 }
