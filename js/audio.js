@@ -1,9 +1,17 @@
 // --- WEB AUDIO API SOUND SYSTEM ---
-const AudioContext = window.AudioContext || window.webkitAudioContext;
-const audioCtx = new AudioContext();
+let audioCtx;
+try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) {
+        audioCtx = new AudioContextClass();
+    }
+} catch (e) {
+    console.error("AudioContext not supported", e);
+}
 
 const SoundFX = {
     playTone(frequency, type, duration, vol=0.1) {
+        if (!audioCtx) return;
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -49,6 +57,10 @@ const SoundFX = {
 
     alert() {
         this.playTone(800, 'square', 0.2, 0.1);
+    },
+
+    click() {
+        this.playTone(700, 'sine', 0.05, 0.1);
     }
 };
 
