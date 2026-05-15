@@ -12,11 +12,18 @@ function rollDiceAnimation(d1, d2, callback) {
     const isDouble = (d1 === d2);
     const reduced = window.Settings && window.Settings.isReducedMotion();
 
-    // Camera zoom-in during roll (auto-restore via tweenCamera completion)
+    // Camera zoom-in during roll. If another tween is already mid-flight (e.g.
+    // focusOnPlayer at bot turn start), capture its END position as the
+    // restore target — otherwise we'd snap back to a meaningless mid-tween point.
     let savedCamPos, savedCamTarget;
     if (!reduced && camera && controls) {
-        savedCamPos = camera.position.clone();
-        savedCamTarget = controls.target.clone();
+        if (typeof isCameraAnimating !== 'undefined' && isCameraAnimating && typeof cameraAnimConfig !== 'undefined' && cameraAnimConfig) {
+            savedCamPos = cameraAnimConfig.endPos.clone();
+            savedCamTarget = cameraAnimConfig.endTarget.clone();
+        } else {
+            savedCamPos = camera.position.clone();
+            savedCamTarget = controls.target.clone();
+        }
         if (typeof tweenCamera === 'function') {
             tweenCamera(new THREE.Vector3(0, 22, 18), new THREE.Vector3(0, 2, 0), 500);
         }
@@ -42,25 +49,27 @@ function rollDiceAnimation(d1, d2, callback) {
         }, isDouble ? 1500 : 1000);
     }
 
-    // ---- Try real cannon-es physics ----
-    if (!reduced && window.DicePhysics) {
-        let usedPseudo = false;
-        const fallback = () => { if (!usedPseudo) { usedPseudo = true; pseudoSim(); } };
-        window.DicePhysics.ensureReady().then((ok) => {
-            if (!ok) return fallback();
-            const ticker = setInterval(() => {
-                d1ui.innerText = Math.floor(Math.random() * 6) + 1;
-                d2ui.innerText = Math.floor(Math.random() * 6) + 1;
-            }, 100);
-            window.DicePhysics.roll(d1, d2, (success) => {
-                clearInterval(ticker);
-                if (success) onSettled();
-                else fallback();
-            });
-        }).catch(fallback);
+    // ---- Try cannon.js physics ONLY if already loaded.
+    // Don't make the user wait on first roll while cannon.js downloads — start
+    // pseudo-physics immediately so the dice are always visibly tumbling. We
+    // also kick off the cannon.js download in the background for subsequent rolls.
+    const physicsReady = !reduced && window.DicePhysics && window.DicePhysics.isReady && window.DicePhysics.isReady();
+    if (physicsReady) {
+        const ticker = setInterval(() => {
+            d1ui.innerText = Math.floor(Math.random() * 6) + 1;
+            d2ui.innerText = Math.floor(Math.random() * 6) + 1;
+        }, 100);
+        window.DicePhysics.roll(d1, d2, (success) => {
+            clearInterval(ticker);
+            if (success) onSettled();
+            else pseudoSim();
+        });
         return;
     }
-
+    // Kick off async load so the NEXT roll can use physics.
+    if (!reduced && window.DicePhysics && window.DicePhysics.ensureReady) {
+        window.DicePhysics.ensureReady();
+    }
     pseudoSim();
 
     // ---- Inline pseudo-physics ----

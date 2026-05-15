@@ -48,9 +48,21 @@ const Game = {
     startTurn() {
         const p = this.players[this.currentPlayerIndex];
         if (p.bankrupt) { this.nextTurn(); return; }
-        
+
         updatePlayerUI();
-        
+
+        // Always reset camera to a useful position at start of turn so the
+        // player sees their token instead of wherever the previous turn ended.
+        // For human player: return to overview (let them see the whole board).
+        // For bot: focus on the bot so the user can watch it move.
+        if (window.Cinematics) {
+            if (p.isBot) {
+                window.Cinematics.focusOnPlayer(p);
+            } else {
+                window.Cinematics.returnToOverview();
+            }
+        }
+
         if (p.isBot) {
             hideModal();
             setTimeout(() => this.doBotTurn(p), 1500); // Increased from 1s to 1.5s
@@ -83,7 +95,7 @@ const Game = {
 
     doBotTurn(p) {
         p.isThinking = true;
-        if (window.Cinematics) window.Cinematics.focusOnPlayer(p);
+        // Camera focus already happened in startTurn — no double tween here.
         updatePlayerUI();
         logMsg(`🤖 ${p.name} đang phân tích bàn cờ...`);
         
