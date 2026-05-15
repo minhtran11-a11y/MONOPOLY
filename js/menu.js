@@ -87,10 +87,10 @@ const MenuManager = {
             this.showScreen('screen-bot-detail');
         };
 
-        document.getElementById('mode-online-trigger').onclick = () => {
+        /* document.getElementById('mode-online-trigger').onclick = () => {
             if(window.SoundFX) window.SoundFX.click();
             this.showScreen('screen-auth');
-        };
+        }; */
 
         document.getElementById('btn-login-confirm').onclick = () => {
             if(window.SoundFX) window.SoundFX.click();
