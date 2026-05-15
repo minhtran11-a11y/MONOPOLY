@@ -29,19 +29,24 @@
     function initWorld() {
         if (initialized || !window.CANNON || !window.dice1) return;
         const CANNON = window.CANNON;
-        world = new CANNON.World({ gravity: new CANNON.Vec3(0, -22, 0) });
+        // cannon.js v0.6.2: World() takes no options. Gravity must be set after.
+        world = new CANNON.World();
+        world.gravity.set(0, -22, 0);
+        world.broadphase = new CANNON.NaiveBroadphase();
         world.allowSleep = true;
-        world.defaultContactMaterial.restitution = 0.35;
-        world.defaultContactMaterial.friction = 0.18;
+        if (world.defaultContactMaterial) {
+            world.defaultContactMaterial.restitution = 0.35;
+            world.defaultContactMaterial.friction = 0.18;
+        }
 
         // Ground plane at y=0
-        const groundShape = new CANNON.Plane();
-        ground = new CANNON.Body({ mass: 0, shape: groundShape });
-        ground.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-        world.addBody(ground);
+        const groundBody = new CANNON.Body({ mass: 0 });
+        groundBody.addShape(new CANNON.Plane());
+        groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+        world.addBody(groundBody);
+        ground = groundBody;
 
         // Soft invisible walls so dice can't fly off-board
-        const wallShape = new CANNON.Plane();
         const walls = [
             { pos: [ 30, 0, 0], axis: [0, 1, 0], ang:  Math.PI / 2 },
             { pos: [-30, 0, 0], axis: [0, 1, 0], ang: -Math.PI / 2 },
@@ -49,7 +54,8 @@
             { pos: [0, 0, -30], axis: [0, 1, 0], ang:  0 }
         ];
         walls.forEach(w => {
-            const b = new CANNON.Body({ mass: 0, shape: wallShape });
+            const b = new CANNON.Body({ mass: 0 });
+            b.addShape(new CANNON.Plane());
             b.position.set(w.pos[0], w.pos[1], w.pos[2]);
             b.quaternion.setFromAxisAngle(new CANNON.Vec3(w.axis[0], w.axis[1], w.axis[2]), w.ang);
             world.addBody(b);
@@ -58,15 +64,13 @@
         // Dice bodies (Three meshes are 2.8 wide → half-extent 1.4)
         meshes = [window.dice1, window.dice2];
         bodies = meshes.map((m, idx) => {
-            const body = new CANNON.Body({
-                mass: 1.2,
-                shape: new CANNON.Box(new CANNON.Vec3(1.4, 1.4, 1.4)),
-                linearDamping: 0.18,
-                angularDamping: 0.18,
-                allowSleep: true,
-                sleepSpeedLimit: 0.25,
-                sleepTimeLimit: 0.4
-            });
+            const body = new CANNON.Body({ mass: 1.2 });
+            body.addShape(new CANNON.Box(new CANNON.Vec3(1.4, 1.4, 1.4)));
+            body.linearDamping = 0.18;
+            body.angularDamping = 0.18;
+            body.allowSleep = true;
+            body.sleepSpeedLimit = 0.25;
+            body.sleepTimeLimit = 0.4;
             body.position.set(idx === 0 ? -3 : 3, 14, 0);
             world.addBody(body);
             return body;
