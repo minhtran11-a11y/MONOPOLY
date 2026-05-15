@@ -11,19 +11,28 @@ const btnSkip = document.getElementById('btn-skip');
 const btnEnd = document.getElementById('btn-end');
 const buildSubmenu = document.getElementById('build-submenu');
 
-const rulesModal = document.getElementById('rules-modal');
-document.getElementById('btn-show-rules').onclick = () => {
-    rulesModal.classList.remove('opacity-0', 'pointer-events-none');
-};
-document.getElementById('btn-close-rules').onclick = () => {
-    rulesModal.classList.add('opacity-0', 'pointer-events-none');
-};
-document.getElementById('btn-close-rules-x').onclick = () => {
-    rulesModal.classList.add('opacity-0', 'pointer-events-none');
-};
-document.getElementById('btn-understood').onclick = () => {
-    rulesModal.classList.add('opacity-0', 'pointer-events-none');
-};
+document.addEventListener('DOMContentLoaded', () => {
+    const rulesModal = document.getElementById('rules-modal');
+    if (!rulesModal) return;
+
+    const closeRules = () => {
+        if(window.SoundFX) window.SoundFX.click();
+        rulesModal.classList.add('opacity-0', 'pointer-events-none');
+    };
+
+    const showBtn = document.getElementById('btn-show-rules');
+    if (showBtn) {
+        showBtn.onclick = () => {
+            if(window.SoundFX) window.SoundFX.click();
+            rulesModal.classList.remove('opacity-0', 'pointer-events-none');
+        };
+    }
+
+    ['btn-close-rules', 'btn-close-rules-x', 'btn-understood'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.onclick = closeRules;
+    });
+});
 
 document.getElementById('btn-quit').onclick = () => {
     if(window.SoundFX) window.SoundFX.click();
