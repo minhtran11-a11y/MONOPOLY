@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const playClick = () => { if(window.SoundFX) window.SoundFX.click(); };
 
     // --- RULES MODAL ---
-    const closeRules = () => {
+    window.closeRules = () => {
         playClick();
         if (rulesModal) {
             rulesModal.classList.add('opacity-0', 'pointer-events-none');
@@ -43,10 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btn-show-rules').onclick = showRules;
     }
 
-    ['btn-close-rules', 'btn-close-rules-x', 'btn-understood'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) btn.onclick = closeRules;
-    });
+
 
     // --- OTHER UI BUTTONS ---
     const btnQuit = document.getElementById('btn-quit');
