@@ -276,8 +276,8 @@
         </div>
 
         <!-- Rules Modal -->
-        <div id="rules-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-500">
-            <div class="glass-panel p-10 max-w-2xl w-full max-h-[85vh] overflow-y-auto custom-scrollbar border-white/20 relative">
+        <div id="rules-modal" onclick="closeRules()" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-500">
+            <div onclick="event.stopPropagation()" class="glass-panel p-10 max-w-2xl w-full max-h-[85vh] overflow-y-auto custom-scrollbar border-white/20 relative">
 
                 <!-- Header row: title + X button -->
                 <div class="flex items-start justify-between mb-8">
