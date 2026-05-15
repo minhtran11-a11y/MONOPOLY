@@ -50,7 +50,7 @@ function createCenterLogo() {
     // Subtext
     ctx.shadowBlur = 10;
     ctx.shadowOffsetY = 5;
-    ctx.font = 'italic 800 90px "Be Vietnam Pro", sans-serif';
+    ctx.font = 'italic 800 90px Montserrat, sans-serif';
     ctx.fillStyle = '#fbbf24';
     ctx.fillText('VIỆT NAM', 512, 590);
 
@@ -217,7 +217,7 @@ function generateTileMaterials(tile, i) {
             const margin = 5;  // gap from tile edge
 
             // --- BOTTOM horizontal white strip ---
-            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            ctx.fillStyle = '#ffffff';
             ctx.fillRect(margin, 512 - margin - stripW, 512 - margin * 2, stripW);
 
             // Bright white outline for bottom strip
@@ -239,14 +239,12 @@ function generateTileMaterials(tile, i) {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.font = '900 36px "Be Vietnam Pro", sans-serif';
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 6;
+            ctx.fillStyle = '#000000';
             ctx.fillText('Thăm tù', 256, 512 - margin - stripW / 2);
             ctx.restore();
 
             // --- LEFT vertical white strip ---
-            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            ctx.fillStyle = '#ffffff';
             ctx.fillRect(margin, margin, stripW, 512 - margin * 2 - stripW); // stop before bottom strip corner
 
             // Bright white outline for left strip
@@ -276,9 +274,7 @@ function generateTileMaterials(tile, i) {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.font = '900 36px "Be Vietnam Pro", sans-serif';
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 6;
+            ctx.fillStyle = '#000000';
             ctx.fillText('Thăm tù', 0, 0);
             ctx.restore();
 

@@ -53,7 +53,7 @@ function drawMenuLogo() {
     // Subtext
     ctx.shadowBlur = 10;
     ctx.shadowOffsetY = 5;
-    ctx.font = 'italic 800 90px "Be Vietnam Pro", sans-serif';
+    ctx.font = 'italic 800 90px Montserrat, sans-serif';
     ctx.fillStyle = '#fbbf24';
     ctx.fillText('VIỆT NAM', 512, 590);
 

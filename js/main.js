@@ -183,7 +183,7 @@ function initMoneyBackground() {
         
         // Detail / $
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${b.size * 0.8}px Arial`;
+        ctx.font = `bold ${b.size * 0.8}px "Be Vietnam Pro", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('$', 0, 0);
