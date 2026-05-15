@@ -18,6 +18,12 @@ document.getElementById('btn-show-rules').onclick = () => {
 document.getElementById('btn-close-rules').onclick = () => {
     rulesModal.classList.add('opacity-0', 'pointer-events-none');
 };
+document.getElementById('btn-close-rules-x').onclick = () => {
+    rulesModal.classList.add('opacity-0', 'pointer-events-none');
+};
+document.getElementById('btn-understood').onclick = () => {
+    rulesModal.classList.add('opacity-0', 'pointer-events-none');
+};
 
 document.getElementById('btn-quit').onclick = () => {
     if(window.SoundFX) window.SoundFX.click();
