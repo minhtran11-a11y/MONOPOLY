@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23ef4444'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-size='36' fill='white' font-family='Arial' font-weight='900'%3E%24%3C/text%3E%3C/svg%3E">
+    <title>Cờ Tỷ Phú 3D - Phiên Bản Cao Cấp</title>
+
+    <!-- Google Fonts loaded non-blocking via preload+onload trick.
+         display=optional = browser uses fallback immediately and only swaps
+         if the font arrives within ~100ms — avoids CLS while keeping LCP fast. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700;900&display=optional" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700;900&display=optional" rel="stylesheet"></noscript>
+
+    <!-- Critical inline CSS so the intro screen renders before Tailwind/style.css
+         finish loading — keeps LCP fast without a build step. Tailwind enhances
+         everything once available. -->
+    <!-- Critical CSS moved to external file for cleaner structure -->
+    <link rel="stylesheet" href="css/critical.css">
+
+    <!-- Tailwind loads async so it never blocks LCP. Menu uses critical CSS above
+         until Tailwind enhances it. -->
+    <script async src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Three.js core + extras + confetti lazy-loaded only when game launches.
+         Menu page is fully styled without Three.js → keeps LCP fast. -->
+    <script>
+    window._loadThreeJS = function () {
+        if (window._threeLoaded) return Promise.resolve();
+        window._threeLoaded = true;
+        const files = [
+            'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+            'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js'
+        ];
+        return files.reduce((p, src) => p.then(() => new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = src; s.onload = res; s.onerror = rej;
+            document.head.appendChild(s);
+        })), Promise.resolve());
+    };
+    window._loadPostFX = function () {
+        if (window._postFxLoaded) return Promise.resolve();
+        window._postFxLoaded = true;
+        const SRC = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js';
+        const files = [
+            SRC + '/postprocessing/EffectComposer.js',
+            SRC + '/postprocessing/RenderPass.js',
+            SRC + '/postprocessing/ShaderPass.js',
+            SRC + '/shaders/CopyShader.js',
+            SRC + '/shaders/LuminosityHighPassShader.js',
+            SRC + '/postprocessing/UnrealBloomPass.js',
+            'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js'
+        ];
+        return files.reduce((p, src) => p.then(() => new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = src; s.onload = res; s.onerror = rej;
+            document.head.appendChild(s);
+        })), Promise.resolve());
+    };
+    </script>
+
+    <!-- style.css loads non-blocking; critical menu styles are inline above. -->
+    <link rel="preload" href="css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/style.css"></noscript>
+    <script>
+        // Tailwind loads async; wait for global before applying config.
+        (function () {
+            const cfg = {
+                theme: {
+                    extend: {
+                        fontFamily: { sans: ['Be Vietnam Pro', 'Montserrat', 'sans-serif'] },
+                        animation: { 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+                    }
+                }
+            };
+            function apply() {
+                if (typeof tailwind !== 'undefined') { tailwind.config = cfg; return true; }
+                return false;
+            }
+            if (!apply()) {
+                const id = setInterval(() => { if (apply()) clearInterval(id); }, 50);
+                setTimeout(() => clearInterval(id), 5000);
+            }
+        })();
+    </script>
+</head>
+
+<body class="bg-slate-900 text-slate-100 overflow-hidden font-sans">
+
+    <!-- Layer 0: 3D Board Canvas -->
+    <div id="canvas-container" class="fixed inset-0 z-0"></div>
+    <canvas id="money-bg" class="fixed inset-0 z-[-1] pointer-events-none opacity-40"></canvas>
+
+    <!-- Layer 1: Main Menu Layer -->
+    <div id="main-menu-layer" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 overflow-hidden transition-all duration-700">
+        <!-- Background Decor -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="absolute -top-24 -left-24 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px]"></div>
+            <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-rose-600/20 rounded-full blur-[120px]"></div>
+        </div>
+
+        <!-- 1. Intro Screen -->
+        <div id="screen-intro" class="menu-screen relative z-10 flex flex-col items-center animate-in fade-in zoom-in duration-1000">
+            <div class="mb-8 drop-shadow-[0_0_50px_rgba(99,102,241,0.5)] transform hover:scale-110 transition-transform duration-700 animate-float">
+                <canvas id="menu-logo-canvas" width="1024" height="1024" style="width:320px;height:320px;"></canvas>
+            </div>
+            <button id="btn-start-game" class="group relative px-16 py-6 bg-white text-slate-900 font-black text-2xl uppercase tracking-[0.3em] rounded-full hover:bg-indigo-500 hover:text-white transition-all duration-500 active:scale-90 overflow-hidden shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+                <span class="relative z-10">Bắt đầu chơi</span>
+                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+            </button>
+            <button id="btn-resume-game" class="hidden mt-4 px-10 py-3 bg-emerald-500/80 hover:bg-emerald-500 text-white font-black text-sm uppercase tracking-[0.25em] rounded-full transition-all backdrop-blur-md border border-white/20">
+                💾 Tiếp tục ván cũ
+            </button>
+        </div>
+
+        <!-- 2. Mode Selection -->
+        <div id="screen-modes" class="menu-screen hidden relative z-10 w-full max-w-4xl px-8 flex flex-col items-center">
+            <h2 class="text-4xl font-black text-white mb-16 uppercase italic tracking-widest text-center">Chọn chế độ chơi</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                <button id="mode-bot-trigger" class="glass-panel p-12 flex flex-col items-center gap-6 group hover:border-indigo-500 transition-all duration-500">
+                    <div class="w-24 h-24 bg-indigo-500/10 rounded-3xl flex items-center justify-center text-5xl group-hover:scale-110 transition-transform">🤖</div>
+                    <div class="text-center">
+                        <h3 class="text-2xl font-black text-white uppercase mb-2">BOT SOLO</h3>
+                        <p class="text-slate-400 text-sm font-bold uppercase tracking-widest">Đấu với máy (NPC)</p>
+                    </div>
+                </button>
+                <div id="mode-online-maintenance" class="glass-panel p-12 flex flex-col items-center gap-6 opacity-60 cursor-not-allowed border-rose-500/30 relative overflow-hidden grayscale">
+                    <div class="absolute top-4 right-4 bg-rose-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg animate-pulse">Bảo trì</div>
+                    <div class="w-24 h-24 bg-rose-500/10 rounded-3xl flex items-center justify-center text-5xl">🌐</div>
+                    <div class="text-center">
+                        <h3 class="text-2xl font-black text-white uppercase mb-2">ONLINE</h3>
+                        <p class="text-slate-400 text-sm font-bold uppercase tracking-widest">Đang nâng cấp hệ thống</p>
+                    </div>
+                </div>
+            </div>
+            <button class="back-to-intro mt-12 text-slate-500 hover:text-white font-black uppercase text-xs tracking-widest transition-colors">← Quay lại</button>
+        </div>
+
+        <!-- 3. Bot Selection -->
+        <div id="screen-bot-detail" class="menu-screen hidden relative z-10 w-full max-w-5xl px-8">
+            <h2 class="text-4xl font-black text-white mb-16 uppercase italic tracking-widest text-center">Tùy chọn BOT Solo</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <button onclick="MenuManager.launchGame(2, 'bot')" class="glass-panel p-8 flex flex-col items-center gap-4 group hover:bg-white hover:text-slate-900 transition-all">
+                    <div class="text-4xl font-black">1vs1</div>
+                    <div class="text-xs font-black uppercase tracking-widest">1 Player vs 1 Bot</div>
+                </button>
+                <button onclick="MenuManager.launchGame(3, 'bot')" class="glass-panel p-8 flex flex-col items-center gap-4 group hover:bg-white hover:text-slate-900 transition-all">
+                    <div class="text-4xl font-black">1vs2</div>
+                    <div class="text-xs font-black uppercase tracking-widest">1 Player vs 2 Bot</div>
+                </button>
+                <button onclick="MenuManager.launchGame(4, 'bot')" class="glass-panel p-8 flex flex-col items-center gap-4 group hover:bg-white hover:text-slate-900 transition-all">
+                    <div class="text-4xl font-black">1vs3</div>
+                    <div class="text-xs font-black uppercase tracking-widest">1 Player vs 3 Bot</div>
+                </button>
+            </div>
+            <div class="flex justify-center mt-12"><button class="back-to-modes text-slate-500 hover:text-white font-black uppercase text-xs tracking-widest">← Quay lại</button></div>
+        </div>
+
+        <!-- 4. Auth Screen -->
+        <div id="screen-auth" class="menu-screen hidden relative z-10 w-full max-w-md glass-panel p-10 flex flex-col gap-6">
+            <div class="text-center">
+                <h2 id="auth-title" class="text-3xl font-black text-white uppercase italic mb-2">Đăng nhập</h2>
+                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Yêu cầu để chơi Online</p>
+            </div>
+            
+            <!-- Tab Buttons -->
+            <div class="flex gap-2 bg-white/5 rounded-xl p-1">
+                <button id="tab-login" class="flex-1 py-3 rounded-lg font-black text-sm uppercase tracking-widest transition-all bg-rose-600 text-white" onclick="switchAuthTab('login')">Đăng nhập</button>
+                <button id="tab-register" class="flex-1 py-3 rounded-lg font-black text-sm uppercase tracking-widest transition-all text-slate-400 hover:text-white" onclick="switchAuthTab('register')">Đăng ký</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="form-login" class="space-y-4">
+                <input id="login-username" type="text" placeholder="Tên đăng nhập" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-rose-500 transition-colors">
+                <input id="login-password" type="password" placeholder="Mật khẩu" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-rose-500 transition-colors">
+                <p id="login-error" class="text-red-400 text-xs font-bold hidden"></p>
+                <button id="btn-login-confirm" class="w-full py-5 bg-rose-600 hover:bg-rose-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg">Đăng nhập</button>
+            </div>
+
+            <!-- Register Form -->
+            <div id="form-register" class="space-y-4 hidden">
+                <input id="reg-username" type="text" placeholder="Tên đăng nhập (ít nhất 3 ký tự)" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-emerald-500 transition-colors">
+                <input id="reg-password" type="password" placeholder="Mật khẩu (ít nhất 4 ký tự)" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-emerald-500 transition-colors">
+                <input id="reg-password-confirm" type="password" placeholder="Xác nhận mật khẩu" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-emerald-500 transition-colors">
+                <p id="reg-error" class="text-red-400 text-xs font-bold hidden"></p>
+                <p id="reg-success" class="text-emerald-400 text-xs font-bold hidden"></p>
+                <button id="btn-register-confirm" class="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg">Đăng ký tài khoản</button>
+            </div>
+
+            <button class="back-to-modes text-slate-500 hover:text-white font-black uppercase text-xs tracking-widest text-center">← Quay lại</button>
+        </div>
+
+        <!-- 5. Online Selection -->
+        <div id="screen-online-detail" class="menu-screen hidden relative z-10 w-full max-w-5xl px-8 flex flex-col items-center">
+            <h2 class="text-4xl font-black text-white mb-10 uppercase italic tracking-widest text-center">Phòng chờ Online</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 w-full">
+                <!-- Left: Create Room -->
+                <div class="glass-panel p-10 flex flex-col gap-6">
+                    <h3 class="text-2xl font-black text-indigo-500 uppercase italic">Tạo phòng mới</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Tên phòng hiển thị</label>
+                            <input id="room-name-input" type="text" placeholder="Ví dụ: Hà Nội Phố" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors">
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Số lượng người chơi</label>
+                                <div class="flex gap-2 bg-white/5 rounded-xl p-1">
+                                    <button onclick="selectPlayerLimit(2)" class="player-limit-btn flex-1 py-3 rounded-lg font-black text-sm transition-all bg-indigo-600 text-white" data-limit="2">2 Người</button>
+                                    <button onclick="selectPlayerLimit(3)" class="player-limit-btn flex-1 py-3 rounded-lg font-black text-sm transition-all text-slate-400 hover:text-white" data-limit="3">3 Người</button>
+                                    <button onclick="selectPlayerLimit(4)" class="player-limit-btn flex-1 py-3 rounded-lg font-black text-sm transition-all text-slate-400 hover:text-white" data-limit="4">4 Người</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Mật mã (Nếu riêng tư)</label>
+                                <input id="room-pass-input" type="password" placeholder="Để trống nếu công khai" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Chế độ phòng</label>
+                            <div class="flex gap-2 bg-white/5 rounded-xl p-1">
+                                <button id="room-type-public" onclick="selectRoomType('public')" class="room-type-btn flex-1 py-3 rounded-lg font-black text-sm transition-all bg-emerald-600 text-white">Công khai</button>
+                                <button id="room-type-private" onclick="selectRoomType('private')" class="room-type-btn flex-1 py-3 rounded-lg font-black text-sm transition-all text-slate-400 hover:text-white">Riêng tư</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="handleCreateRoom()" class="w-full py-5 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg mt-4">Tạo phòng ngay</button>
+                </div>
+
+                <!-- Right: Quick Join / Public Rooms -->
+                <div class="glass-panel p-10 flex flex-col gap-6">
+                    <h3 class="text-2xl font-black text-rose-500 uppercase italic">Vào phòng có sẵn</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Nhập mã phòng để vào</label>
+                            <div class="flex gap-2">
+                                <input id="join-room-input" type="text" placeholder="Nhập mã..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-rose-500 transition-colors">
+                                <button onclick="handleJoinRoom()" class="px-8 bg-rose-600 hover:bg-rose-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg">Vào</button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 pt-4 border-t border-white/10">
+                            <div class="flex justify-between items-center mb-4">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Phòng công khai đang chờ...</label>
+                                <button onclick="handleRefreshRooms()" class="text-indigo-400 hover:text-white transition-all text-sm flex items-center gap-1 group">
+                                    <span id="refresh-icon" class="inline-block group-active:rotate-180 transition-transform duration-300">🔄</span>
+                                    <span class="text-[8px] font-black uppercase">Làm mới</span>
+                                </button>
+                            </div>
+                            <div id="public-rooms-list" class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-4 italic">Hiện không có phòng công khai nào...</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-center mt-10"><button class="back-to-modes text-slate-500 hover:text-white font-black uppercase text-xs tracking-widest">← Quay lại</button></div>
+        </div>
+
+        <!-- 6. Online Waiting Lobby -->
+        <div id="screen-online-lobby" class="menu-screen hidden relative z-10 w-full max-w-4xl px-8 flex flex-col items-center">
+            <div class="glass-panel p-10 w-full flex flex-col gap-8">
+                <div class="flex justify-between items-start border-b border-white/10 pb-6">
+                    <div>
+                        <h2 id="lobby-room-name" class="text-3xl font-black text-white uppercase italic tracking-widest">PHÒNG: BANBE123</h2>
+                        <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mt-1">Chủ phòng: Bạn</p>
+                    </div>
+                    <div class="bg-indigo-600/10 px-6 py-3 rounded-2xl border border-indigo-500/30 flex items-center gap-3">
+                        <div class="flex -space-x-2">
+                            <div class="w-6 h-6 rounded-full bg-indigo-500 border-2 border-slate-900"></div>
+                            <div class="w-6 h-6 rounded-full bg-slate-700 border-2 border-slate-900"></div>
+                            <div class="w-6 h-6 rounded-full bg-slate-700 border-2 border-slate-900"></div>
+                        </div>
+                        <span id="lobby-count" class="text-indigo-400 font-black text-lg">1/4</span>
+                        <span class="text-[10px] text-white/50 font-black uppercase tracking-widest">Đang chờ</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Sơ đồ vị trí người chơi</label>
+                    <div id="lobby-players-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Slots will be injected here -->
+                    </div>
+                </div>
+
+                <div class="flex gap-4 mt-4">
+                    <button onclick="leaveLobby()" class="flex-1 py-5 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-black uppercase tracking-widest rounded-xl transition-all border border-white/10">Thoát phòng</button>
+                    <button id="btn-start-lobby" onclick="startOnlineFromLobby()" class="flex-[2] py-5 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-indigo-600/20 opacity-50 pointer-events-none">ĐANG ĐỢI NGƯỜI CHƠI...</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layer 2: In-Game HUD -->
+    <div id="game-ui-layer" class="fixed inset-0 z-10 pointer-events-none transition-opacity duration-1000 opacity-0 hidden">
+        
+        <!-- Player List (desktop: top-right column / mobile: bottom-sheet drawer) -->
+        <div id="players-shell" class="players-shell pointer-events-auto">
+            <button id="players-toggle" class="players-toggle" aria-expanded="false" aria-controls="players-container" aria-label="Hiển thị danh sách người chơi">
+                <span class="players-toggle-handle"></span>
+                <span class="players-toggle-label">Người chơi</span>
+            </button>
+            <div id="players-container" class="flex flex-col gap-4">
+                <!-- Dynamic Players with Thinking Indicators -->
+            </div>
+        </div>
+
+        <!-- Game Log -->
+        <div class="absolute top-8 left-8 flex flex-col gap-4 pointer-events-auto">
+            <div class="flex gap-2">
+                <button id="btn-show-rules" aria-label="Xem luật chơi" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-white hover:text-slate-900 transition-all border-white/20">Luật chơi 📖</button>
+                <button id="btn-mortgage-menu" aria-label="Mở bảng cầm cố" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-amber-500 hover:text-white transition-all border-white/20">Cầm cố 🏦</button>
+                <button id="btn-trade" aria-label="Đề nghị giao dịch" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-purple-500 hover:text-white transition-all border-white/20">Giao dịch 🤝</button>
+                <button id="btn-settings" aria-label="Mở cài đặt" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-500 hover:text-white transition-all border-white/20">Cài đặt ⚙️</button>
+                <button id="btn-surrender" aria-label="Đầu hàng" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-rose-500 hover:text-white transition-all border-white/20">Đầu hàng 🏳️</button>
+                <button id="btn-quit" aria-label="Trở về menu chính" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-500 hover:text-white transition-all border-white/20">Trở về 🏠</button>
+            </div>
+
+            <!-- Mortgage Panel (always accessible) -->
+            <div id="mortgage-panel" class="hidden glass-panel w-96 max-h-80 flex flex-col border-white/10 overflow-hidden">
+            </div>
+            
+            <div class="glass-panel w-96 h-80 p-6 flex flex-col border-white/10">
+                <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+                    <h4 class="text-sm font-black uppercase tracking-widest text-slate-500">Lịch sử trận đấu</h4>
+                    <div class="flex gap-1">
+                        <button onclick="window.replayLastRoll && window.replayLastRoll()" aria-label="Xem lại lần đổ xí ngầu" title="Xem lại lần đổ xí ngầu" class="text-xs px-2 py-1 rounded-md bg-black/10 hover:bg-indigo-500 hover:text-white transition-all">🎲</button>
+                        <button onclick="window.exportGameLog && window.exportGameLog()" aria-label="Xuất nhật ký" title="Xuất nhật ký" class="text-xs px-2 py-1 rounded-md bg-black/10 hover:bg-indigo-500 hover:text-white transition-all">📋</button>
+                    </div>
+                </div>
+                <div id="game-log" class="flex-1 overflow-y-auto text-sm space-y-3 font-bold text-slate-700 custom-scrollbar">
+                    <!-- Log Messages -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Rules Modal placeholder removed; new modal is injected at body level below -->
+
+
+        <!-- Action Central -->
+        <div id="action-modal" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 glass-panel p-10 text-center scale-0 transition-all duration-500 pointer-events-auto border-white/30 shadow-[0_30px_100px_rgba(0,0,0,0.5)]">
+            <h2 id="modal-title" class="text-4xl font-black text-slate-900 mb-2 uppercase">Lượt của bạn</h2>
+            <p id="modal-desc" class="text-slate-600 mb-8 font-bold text-lg">Đến lượt bạn lắc xí ngầu...</p>
+            <div id="modal-buttons" class="flex justify-center gap-4 flex-wrap">
+                <button id="btn-roll" class="btn-action bg-indigo-600">ĐỔ XÍ NGẦU</button>
+                <button id="btn-build-menu" class="btn-action bg-orange-500 hidden">XÂY NHÀ</button>
+                <button id="btn-buy" class="btn-action bg-emerald-600 hidden">MUA ĐẤT</button>
+                <button id="btn-skip" class="btn-action bg-slate-500 hidden">BỎ QUA</button>
+                <button id="btn-end" class="btn-action bg-purple-600 hidden">KẾT THÚC LƯỢT</button>
+            </div>
+            <div id="build-submenu" class="hidden mt-6 pt-6 border-t border-black/5 space-y-3 max-h-60 overflow-y-auto custom-scrollbar"></div>
+        </div>
+
+        <!-- Bottom Tile Info -->
+        <div id="tile-info" class="absolute bottom-36 left-1/2 -translate-x-1/2 glass-panel px-10 py-5 flex items-center gap-8 translate-y-32 opacity-0 transition-all duration-700 pointer-events-auto border-white/40">
+            <div id="tile-color" class="w-16 h-16 rounded-2xl shadow-xl"></div>
+            <div>
+                <h3 id="tile-name" class="text-2xl font-black text-slate-900">Bất Động Sản</h3>
+                <p id="tile-price" class="text-lg font-bold text-slate-600">Giá: $0 | Thuê: $0</p>
+                <p id="tile-owner" class="text-xs font-black uppercase text-slate-400 mt-1 tracking-widest">CHƯA CÓ CHỦ SỞ HỮU</p>
+            </div>
+        </div>
+
+        <!-- Dice Result Overlay -->
+        <div id="dice-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none z-30 opacity-0 scale-50 transition-all duration-500">
+            <div class="flex gap-8 bg-black/40 backdrop-blur-xl p-10 rounded-[3rem] border border-white/20 shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+                <div id="dice-1-ui" class="w-32 h-32 bg-white rounded-3xl flex items-center justify-center text-6xl shadow-2xl font-black text-slate-900">1</div>
+                <div id="dice-2-ui" class="w-32 h-32 bg-white rounded-3xl flex items-center justify-center text-6xl shadow-2xl font-black text-slate-900">1</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules Modal (top-level, outside #game-ui-layer to avoid pointer-events issues) -->
+    <div id="rules-modal" class="hidden fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-md" style="pointer-events: auto;">
+        <div id="rules-modal-panel" class="glass-panel p-10 max-w-2xl w-[90%] max-h-[85vh] overflow-y-auto custom-scrollbar border-white/20 relative">
+            <div class="flex items-start justify-between mb-8">
+                <h2 class="text-4xl font-black text-slate-900 uppercase italic leading-tight">📖 Thể lệ<br>trò chơi</h2>
+                <button data-close-rules type="button"
+                    class="px-6 py-2 rounded-xl bg-slate-900/10 hover:bg-rose-500 hover:text-white text-slate-600 font-black text-xs uppercase tracking-widest transition-all duration-300 flex-shrink-0 ml-4 border border-white/20"
+                    title="Đóng (Esc)">
+                    Thoát ✕
+                </button>
+            </div>
+
+            <div class="space-y-6 text-slate-700 font-bold leading-relaxed">
+                <section>
+                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Chuẩn bị</h3>
+                    <p>Mỗi người chơi chọn 1 quân cờ, nhận một số tiền vốn nhất định từ ngân hàng (thông thường là $1500).</p>
+                </section>
+                <section>
+                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Bắt đầu</h3>
+                    <p>Tung xúc xắc, ai cao điểm nhất đi trước. Người chơi đi theo chiều kim đồng hồ.</p>
+                </section>
+                <section>
+                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Di chuyển</h3>
+                    <p>Tung 2 viên xúc xắc và di chuyển quân cờ tương ứng.</p>
+                </section>
+                <section>
+                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Hành động tại ô dừng chân</h3>
+                    <ul class="list-disc list-inside ml-2 mt-2 space-y-2">
+                        <li><strong>Mua đất:</strong> Trả tiền cho ngân hàng để sở hữu thẻ đất.</li>
+                        <li><strong>Trả tiền thuê:</strong> Nếu dừng ở đất đối thủ, phải trả tiền thuê theo thẻ.</li>
+                        <li><strong>Vào tù:</strong> Mất 3 lượt hoặc phải đổ xúc xắc ra đôi để thoát.</li>
+                        <li><strong>Xây nhà:</strong> Khi đã sở hữu toàn bộ các ô đất trong một nhóm màu, bạn được phép xây nhà/khách sạn để tăng phí thuê.</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Phá sản</h3>
+                    <p>Khi nợ tiền đối thủ hoặc ngân hàng mà không có tiền mặt hay tài sản để thế chấp, bạn bị loại khỏi trò chơi.</p>
+                </section>
+                <section>
+                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Chiến thắng</h3>
+                    <p>Trò chơi kết thúc khi chỉ còn 1 người duy nhất không phá sản.</p>
+                </section>
+            </div>
+
+            <div class="flex gap-4 mt-10">
+                <button data-close-rules type="button"
+                    class="flex-1 py-5 bg-white/20 hover:bg-white/30 text-slate-800 font-black uppercase tracking-widest rounded-2xl transition-all duration-300 border border-white/30 hover:scale-105">
+                    ← Tiếp tục chơi
+                </button>
+                <button data-close-rules type="button"
+                    class="flex-[2] btn-primary py-5">
+                    ✅ TÔI ĐÃ HIỂU
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script defer src="js/perf.js"></script>
+    <script defer src="js/settings.js"></script>
+    <script defer src="js/audio.js"></script>
+    <script defer src="js/toast.js"></script>
+    <script defer src="js/constants.js"></script>
+    <script defer src="js/utils.js"></script>
+    <script defer src="js/data.js"></script>
+    <script defer src="js/ui.js"></script>
+    <script defer src="js/settings_ui.js"></script>
+    <script defer src="js/tokens.js"></script>
+    <script defer src="js/pool.js"></script>
+    <script defer src="js/animations.js"></script>
+    <script defer src="js/landmarks.js"></script>
+    <script defer src="js/skyline.js"></script>
+    <script defer src="js/engine.js"></script>
+    <script defer src="js/postfx.js"></script>
+    <script defer src="js/dice_physics.js"></script>
+    <script defer src="js/dice_anim.js"></script>
+    <script defer src="js/cinematics.js"></script>
+    <script defer src="js/game.js"></script>
+    <script defer src="js/rules.js"></script>
+    <script defer src="js/property_card.js"></script>
+    <script defer src="js/tutorial.js"></script>
+    <script defer src="js/hints.js"></script>
+    <script defer src="js/trade.js"></script>
+    <script defer src="js/persistence.js"></script>
+    <script defer src="js/menu.js"></script>
+    <script defer src="js/main.js"></script>
+</body>
+</html>
