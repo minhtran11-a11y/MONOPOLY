@@ -4,6 +4,14 @@ const Game = {
     currentPlayerIndex: 0,
     isAnimating: false,
     lastRoll: null,  // { d1, d2, total } — for replay
+    _autoEndTimer: null,
+
+    _cancelAutoEnd() {
+        if (this._autoEndTimer) {
+            clearTimeout(this._autoEndTimer);
+            this._autoEndTimer = null;
+        }
+    },
     
     init(total, mode) {
         // Clear previous state
@@ -48,6 +56,9 @@ const Game = {
     startTurn() {
         const p = this.players[this.currentPlayerIndex];
         if (p.bankrupt) { this.nextTurn(); return; }
+
+        // Always cancel any stale auto-end timer from a previous turn.
+        this._cancelAutoEnd();
 
         updatePlayerUI();
 
@@ -555,26 +566,25 @@ const Game = {
                 Game.isProcessingTurn = true;
                 // No auto-end timer — player must click End Turn manually
             } else {
-                // No actions left: auto-end after short pause
+                // No actions left: auto-end after short pause.
+                // Track timer on Game so any future state change can cancel it
+                // (prevents a stale timer from skipping a future turn).
                 showModal(`${p.name}`, `Lượt đã hoàn tất. Đang chuyển lượt...`, ['end']);
                 Game.isProcessingTurn = true;
-                const autoEnd = setTimeout(() => {
-                    if (Game.currentPlayerIndex === p.id) {
+                Game._cancelAutoEnd();
+                Game._autoEndTimer = setTimeout(() => {
+                    Game._autoEndTimer = null;
+                    if (Game.currentPlayerIndex === p.id && !p.bankrupt) {
                         hideModal();
                         Game.nextTurn();
                     }
                 }, 2000);
-                const btnEndA = document.getElementById('btn-end');
-                if (btnEndA) btnEndA.onclick = () => {
-                    clearTimeout(autoEnd);
-                    hideModal();
-                    Game.nextTurn();
-                };
             }
 
-            // End Turn button always works
-            const btnEndB = document.getElementById('btn-end');
-            if (btnEndB) btnEndB.onclick = () => {
+            // End Turn button always works — and always cancels the auto-end timer.
+            const btnEndEl = document.getElementById('btn-end');
+            if (btnEndEl) btnEndEl.onclick = () => {
+                Game._cancelAutoEnd();
                 hideModal();
                 Game.nextTurn();
             };
@@ -584,7 +594,8 @@ const Game = {
     nextTurn() {
         // Centralized turn switching
         Game.isProcessingTurn = false;
-        
+        Game._cancelAutoEnd();
+
         let originalIndex = Game.currentPlayerIndex;
         let count = 0;
         do {
