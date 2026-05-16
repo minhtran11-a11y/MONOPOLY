@@ -177,22 +177,27 @@
             </div>
 
             <!-- Login Form -->
-            <div id="form-login" class="space-y-4">
-                <input id="login-username" type="text" placeholder="Tên đăng nhập" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-rose-500 transition-colors">
-                <input id="login-password" type="password" placeholder="Mật khẩu" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-rose-500 transition-colors">
+            <form id="form-login" class="space-y-4" onsubmit="event.preventDefault(); document.getElementById('btn-login-confirm').click();" autocomplete="on">
+                <label for="login-username" class="sr-only">Tên đăng nhập</label>
+                <input id="login-username" name="username" type="text" autocomplete="username" placeholder="Tên đăng nhập" aria-label="Tên đăng nhập" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-rose-500 transition-colors">
+                <label for="login-password" class="sr-only">Mật khẩu</label>
+                <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Mật khẩu" aria-label="Mật khẩu" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-rose-500 transition-colors">
                 <p id="login-error" class="text-red-400 text-xs font-bold hidden"></p>
-                <button id="btn-login-confirm" class="w-full py-5 bg-rose-600 hover:bg-rose-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg">Đăng nhập</button>
-            </div>
+                <button id="btn-login-confirm" type="submit" class="w-full py-5 bg-rose-600 hover:bg-rose-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg">Đăng nhập</button>
+            </form>
 
             <!-- Register Form -->
-            <div id="form-register" class="space-y-4 hidden">
-                <input id="reg-username" type="text" placeholder="Tên đăng nhập (ít nhất 3 ký tự)" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-emerald-500 transition-colors">
-                <input id="reg-password" type="password" placeholder="Mật khẩu (ít nhất 4 ký tự)" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-emerald-500 transition-colors">
-                <input id="reg-password-confirm" type="password" placeholder="Xác nhận mật khẩu" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-emerald-500 transition-colors">
+            <form id="form-register" class="space-y-4 hidden" onsubmit="event.preventDefault(); document.getElementById('btn-register-confirm').click();" autocomplete="on">
+                <label for="reg-username" class="sr-only">Tên đăng nhập mới</label>
+                <input id="reg-username" name="new-username" type="text" autocomplete="username" placeholder="Tên đăng nhập (ít nhất 3 ký tự)" aria-label="Tên đăng nhập mới" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-emerald-500 transition-colors">
+                <label for="reg-password" class="sr-only">Mật khẩu mới</label>
+                <input id="reg-password" name="new-password" type="password" autocomplete="new-password" placeholder="Mật khẩu (ít nhất 4 ký tự)" aria-label="Mật khẩu mới" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-emerald-500 transition-colors">
+                <label for="reg-password-confirm" class="sr-only">Xác nhận mật khẩu</label>
+                <input id="reg-password-confirm" name="password-confirm" type="password" autocomplete="new-password" placeholder="Xác nhận mật khẩu" aria-label="Xác nhận mật khẩu" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-emerald-500 transition-colors">
                 <p id="reg-error" class="text-red-400 text-xs font-bold hidden"></p>
                 <p id="reg-success" class="text-emerald-400 text-xs font-bold hidden"></p>
-                <button id="btn-register-confirm" class="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg">Đăng ký tài khoản</button>
-            </div>
+                <button id="btn-register-confirm" type="submit" class="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg">Đăng ký tài khoản</button>
+            </form>
 
             <button class="back-to-modes text-slate-500 hover:text-white font-black uppercase text-xs tracking-widest text-center">← Quay lại</button>
         </div>
@@ -207,8 +212,8 @@
                     <h3 class="text-2xl font-black text-indigo-500 uppercase italic">Tạo phòng mới</h3>
                     <div class="space-y-4">
                         <div>
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Tên phòng hiển thị</label>
-                            <input id="room-name-input" type="text" placeholder="Ví dụ: Hà Nội Phố" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors">
+                            <label for="room-name-input" class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Tên phòng hiển thị</label>
+                            <input id="room-name-input" name="room-name" type="text" placeholder="Ví dụ: Hà Nội Phố" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors">
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -220,8 +225,8 @@
                                 </div>
                             </div>
                             <div>
-                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Mật mã (Nếu riêng tư)</label>
-                                <input id="room-pass-input" type="password" placeholder="Để trống nếu công khai" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors">
+                                <label for="room-pass-input" class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Mật mã (Nếu riêng tư)</label>
+                                <input id="room-pass-input" name="room-password" type="password" autocomplete="off" placeholder="Để trống nếu công khai" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors">
                             </div>
                         </div>
                         <div>
@@ -240,9 +245,9 @@
                     <h3 class="text-2xl font-black text-rose-500 uppercase italic">Vào phòng có sẵn</h3>
                     <div class="space-y-4">
                         <div>
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Nhập mã phòng để vào</label>
+                            <label for="join-room-input" class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Nhập mã phòng để vào</label>
                             <div class="flex gap-2">
-                                <input id="join-room-input" type="text" placeholder="Nhập mã..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-rose-500 transition-colors">
+                                <input id="join-room-input" name="join-room-code" type="text" placeholder="Nhập mã..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-rose-500 transition-colors">
                                 <button onclick="handleJoinRoom()" class="px-8 bg-rose-600 hover:bg-rose-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg">Vào</button>
                             </div>
                         </div>
