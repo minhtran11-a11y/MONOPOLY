@@ -1,7 +1,6 @@
 // --- OBJECT POOL FOR PARTICLE MESHES ---
 // Reduces GC churn during heavy confetti / dust / money bursts.
 // Pools by (geometryFactory + materialFactory) keyed name.
-(function () {
     const pools = new Map();
 
     function getPool(name) {
@@ -51,5 +50,7 @@
     }
     function clearAll() { pools.forEach((_, k) => clear(k)); }
 
-    window.MeshPool = { acquire, release, size, clear, clearAll };
-})();
+    window.MeshPool = { acquire, release, size, clear, clearAll }; // LEGACY-BRIDGE
+
+// ESM export — same object as the legacy window bridge above.
+export const MeshPool = window.MeshPool;

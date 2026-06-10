@@ -75,4 +75,4 @@ const TokenFactory = (function () {
     return { create, NAMES };
 })();
 
-window.TokenFactory = TokenFactory;
+window.TokenFactory = TokenFactory; // LEGACY-BRIDGE

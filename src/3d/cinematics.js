@@ -1,7 +1,6 @@
 // --- CAMERA CINEMATICS ---
 // All camera auto-movement has been disabled — player controls camera freely via OrbitControls.
 
-(function () {
     function playIntro(onDone) {
         // No intro animation — keep camera at starting position
         if (window.controls) window.controls.enabled = true;
@@ -22,5 +21,10 @@
         // No winning cinematic camera movement
     }
 
-    window.Cinematics = { playIntro, focusOnPlayer, returnToOverview, playWinning };
-})();
+    window.Cinematics = { playIntro, focusOnPlayer, returnToOverview, playWinning }; // LEGACY-BRIDGE
+
+window.playIntro = playIntro; // LEGACY-BRIDGE
+window.focusOnPlayer = focusOnPlayer; // LEGACY-BRIDGE
+window.returnToOverview = returnToOverview; // LEGACY-BRIDGE
+window.playWinning = playWinning; // LEGACY-BRIDGE
+export const Cinematics = window.Cinematics;

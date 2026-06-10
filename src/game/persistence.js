@@ -1,5 +1,4 @@
 // --- AUTO-SAVE & RESUME GAME STATE ---
-(function () {
     const KEY = 'monopoly3d_save_v1';
     let saveTimer = null;
 
@@ -130,5 +129,6 @@
         window.Game._autoSaveAttached = true;
     }
 
-    window.GameSave = { save, load, clear, hasSavedGame, restoreInto, attachAutoSave };
-})();
+    window.GameSave = { save, load, clear, hasSavedGame, restoreInto, attachAutoSave }; // LEGACY-BRIDGE
+
+export const GameSave = window.GameSave;

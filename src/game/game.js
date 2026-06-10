@@ -1,3 +1,5 @@
+import { ctx3d } from '../3d/context.js';
+
 // --- GAME LOGIC ENGINE ---
 const Game = {
     players: [],
@@ -168,7 +170,7 @@ const Game = {
     },
 
     movePlayerAnim(player, steps, isDouble = false) {
-        window.isAnimating = true;
+        window.isAnimating = true; // LEGACY-BRIDGE
         let current = player.position;
         let target = (current + steps) % 40;
 
@@ -207,7 +209,7 @@ const Game = {
 
                 if (i === path.length - 1) {
                     setTimeout(() => {
-                        window.isAnimating = false;
+                        window.isAnimating = false; // LEGACY-BRIDGE
                         // Pulse the destination tile so player can see exactly where they landed
                         if (window.Anim3D && ctx3d.boardMeshes[tileIdx]) {
                             window.Anim3D.tilePulse(ctx3d.boardMeshes[tileIdx]);
@@ -603,8 +605,8 @@ const Game = {
 };
 
 // --- GLOBAL INITIALIZER ---
-window.Game = Game;
-window.initGameSession = (total, mode) => Game.init(total, mode);
+window.Game = Game; // LEGACY-BRIDGE
+window.initGameSession = (total, mode) => Game.init(total, mode); // LEGACY-BRIDGE
 
 // --- ROLL BUTTON BINDING (wired after DOM ready) ---
 function _bindRollButton() {
@@ -649,7 +651,7 @@ if (document.readyState === 'loading') {
     _bindRollButton();
 }
 
-window.replayLastRoll = () => {
+window.replayLastRoll = () => { // LEGACY-BRIDGE
     if (!Game.lastRoll) {
         if (window.Toast) window.Toast.show('Chưa có lần đổ xí ngầu nào', { type: 'warn' });
         return;
@@ -664,7 +666,7 @@ window.replayLastRoll = () => {
     }
 };
 
-window.exportGameLog = () => {
+window.exportGameLog = () => { // LEGACY-BRIDGE
     const logEl = document.getElementById('game-log');
     if (!logEl) return;
     const lines = Array.from(logEl.querySelectorAll('span.text-slate-700')).map(s => s.textContent);
@@ -678,7 +680,7 @@ window.exportGameLog = () => {
     if (window.Toast) window.Toast.show('Đã xuất nhật ký trận đấu', { type: 'success' });
 };
 
-window.toggleMortgage = (tileId) => {
+window.toggleMortgage = (tileId) => { // LEGACY-BRIDGE
     const tile = boardData[tileId];
     const p = Game.players[Game.currentPlayerIndex];
     if (!tile || !p) return;
@@ -709,7 +711,7 @@ window.toggleMortgage = (tileId) => {
     updatePlayerUI();
 };
 
-window.executeBuild = (tileId) => {
+window.executeBuild = (tileId) => { // LEGACY-BRIDGE
     const p = Game.players[Game.currentPlayerIndex];
     const tile = boardData[tileId];
     if (p.money >= tile.houseCost && tile.houses < 5) {
@@ -723,58 +725,6 @@ window.executeBuild = (tileId) => {
     }
 };
 
-window.calculateRent = function(tile) {
-    if (tile.type === TILE_TYPES.PROPERTY) {
-        if (tile.houses === 0) {
-            if (tile.owner !== null) {
-                const groupTiles = boardData.filter(t => t.groupId === tile.groupId);
-                const allOwned = groupTiles.every(t => t.owner === tile.owner);
-                if (allOwned) return tile.rent * 2;
-            }
-            return tile.rent;
-        } else if (tile.houses === 1) return tile.rent * 5;
-        else if (tile.houses === 2) return tile.rent * 15;
-        else if (tile.houses === 3) return tile.rent * 40;
-        else if (tile.houses === 4) return tile.rent * 60;
-        else if (tile.houses === 5) return tile.rent * 80;
-    } else if (tile.type === TILE_TYPES.RAILROAD) {
-        if (tile.owner !== null) {
-            const railroadsOwned = boardData.filter(t => t.type === TILE_TYPES.RAILROAD && t.owner === tile.owner).length;
-            return railroadsOwned > 0 ? 25 * Math.pow(2, railroadsOwned - 1) : tile.rent;
-        }
-        return tile.rent;
-    } else if (tile.type === TILE_TYPES.UTILITY) {
-        if (tile.owner !== null) {
-            const utilitiesOwned = boardData.filter(t => t.type === TILE_TYPES.UTILITY && t.owner === tile.owner).length;
-            return utilitiesOwned === 2 ? 100 : 40;
-        }
-        return tile.rent;
-    }
-    return 0;
-};
+window._bindRollButton = _bindRollButton; // LEGACY-BRIDGE
 
-window.getBuildableProperties = function(playerId) {
-    const buildables = [];
-    const groups = {};
-    boardData.forEach(t => {
-        if (t.type === TILE_TYPES.PROPERTY) {
-            if (!groups[t.groupId]) groups[t.groupId] = [];
-            groups[t.groupId].push(t);
-        }
-    });
-
-    for (let groupId in groups) {
-        const groupTiles = groups[groupId];
-        const allOwnedByPlayer = groupTiles.every(t => t.owner === playerId && !t.isMortgaged);
-        if (allOwnedByPlayer) {
-            const minHouses = Math.min(...groupTiles.map(t => t.houses || 0));
-            groupTiles.forEach(t => {
-                if ((t.houses || 0) === minHouses && (t.houses || 0) < 5) {
-                    buildables.push(t);
-                }
-            });
-        }
-    }
-    return buildables;
-};
-
+export { Game };

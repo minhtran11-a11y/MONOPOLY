@@ -72,7 +72,11 @@ function getBuildableProperties(playerId) {
 }
 
 // Expose as globals (some callers use bare names, others Game.*)
-window.calculateRent = calculateRent;
-window.getBuildableProperties = getBuildableProperties;
+window.calculateRent = calculateRent; // LEGACY-BRIDGE
+window.getBuildableProperties = getBuildableProperties; // LEGACY-BRIDGE
 // Wire Game.getBuildableProperties so ui.js's defensive check resolves to our impl.
 if (typeof Game !== 'undefined') Game.getBuildableProperties = getBuildableProperties;
+
+window._ownsAllInGroup = _ownsAllInGroup; // LEGACY-BRIDGE
+
+export { calculateRent, getBuildableProperties };

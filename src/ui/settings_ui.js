@@ -1,5 +1,4 @@
 // --- SETTINGS PANEL (modal UI + wiring) ---
-(function () {
     const PANEL_ID = 'settings-modal';
 
     function buildPanel() {
@@ -184,5 +183,6 @@
         if (el && !el.classList.contains('hidden')) close();
     });
 
-    window.SettingsUI = { open, close };
-})();
+    window.SettingsUI = { open, close }; // LEGACY-BRIDGE
+
+export const SettingsUI = window.SettingsUI;

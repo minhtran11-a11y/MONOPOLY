@@ -1,6 +1,5 @@
 // --- FIRST-RUN INTERACTIVE TUTORIAL ---
 // 5-step intro. Shown only on first launch (persisted via localStorage).
-(function () {
     const KEY = 'monopoly3d_tutorial_done_v1';
     const ROOT_ID = 'tutorial-overlay';
 
@@ -90,5 +89,6 @@
         try { localStorage.removeItem(KEY); } catch (e) {}
     }
 
-    window.Tutorial = { start, shouldShow, reset };
-})();
+    window.Tutorial = { start, shouldShow, reset }; // LEGACY-BRIDGE
+
+export const Tutorial = window.Tutorial;

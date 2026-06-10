@@ -2,19 +2,19 @@
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.logEl = document.getElementById('game-log');
-    window.playersContainer = document.getElementById('players-container');
-    window.actionModal = document.getElementById('action-modal');
-    window.modalTitle = document.getElementById('modal-title');
-    window.modalDesc = document.getElementById('modal-desc');
-    window.btnRoll = document.getElementById('btn-roll');
-    window.btnBuildMenu = document.getElementById('btn-build-menu');
-    window.btnBuy = document.getElementById('btn-buy');
-    window.btnSkip = document.getElementById('btn-skip');
-    window.btnEnd = document.getElementById('btn-end');
-    window.buildSubmenu = document.getElementById('build-submenu');
-    window.rulesModal = document.getElementById('rules-modal');
-    window.mortgagePanel = document.getElementById('mortgage-panel');
+    window.logEl = document.getElementById('game-log'); // LEGACY-BRIDGE
+    window.playersContainer = document.getElementById('players-container'); // LEGACY-BRIDGE
+    window.actionModal = document.getElementById('action-modal'); // LEGACY-BRIDGE
+    window.modalTitle = document.getElementById('modal-title'); // LEGACY-BRIDGE
+    window.modalDesc = document.getElementById('modal-desc'); // LEGACY-BRIDGE
+    window.btnRoll = document.getElementById('btn-roll'); // LEGACY-BRIDGE
+    window.btnBuildMenu = document.getElementById('btn-build-menu'); // LEGACY-BRIDGE
+    window.btnBuy = document.getElementById('btn-buy'); // LEGACY-BRIDGE
+    window.btnSkip = document.getElementById('btn-skip'); // LEGACY-BRIDGE
+    window.btnEnd = document.getElementById('btn-end'); // LEGACY-BRIDGE
+    window.buildSubmenu = document.getElementById('build-submenu'); // LEGACY-BRIDGE
+    window.rulesModal = document.getElementById('rules-modal'); // LEGACY-BRIDGE
+    window.mortgagePanel = document.getElementById('mortgage-panel'); // LEGACY-BRIDGE
 
     // Helper to play click sound
     const playClick = () => { if(window.SoundFX) window.SoundFX.click(); };
@@ -22,13 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- RULES MODAL ---
     const rulesPanel = document.getElementById('rules-modal-panel');
 
-    window.closeRules = () => {
+    window.closeRules = () => { // LEGACY-BRIDGE
         playClick();
         if (rulesModal) rulesModal.classList.add('hidden');
         document.body.classList.remove('modal-open');
     };
 
-    window.showRules = () => {
+    window.showRules = () => { // LEGACY-BRIDGE
         playClick();
         if (rulesModal) rulesModal.classList.remove('hidden');
         document.body.classList.add('modal-open');
@@ -186,7 +186,7 @@ function notify(msg, opts = {}) {
         window.Settings.haptic(opts.haptic);
     }
 }
-window.notify = notify;
+window.notify = notify; // LEGACY-BRIDGE
 
 function logMsg(msg) {
     const logEl = document.getElementById('game-log');
@@ -197,10 +197,10 @@ function logMsg(msg) {
     logEl.appendChild(div);
     logEl.scrollTop = logEl.scrollHeight;
 }
-window.logMsg = logMsg;
+window.logMsg = logMsg; // LEGACY-BRIDGE
 
 function updatePlayerUI() { renderPlayerUI(); }
-window.updatePlayerUI = updatePlayerUI;
+window.updatePlayerUI = updatePlayerUI; // LEGACY-BRIDGE
 
 function renderPlayerUI() {
     const playersContainer = document.getElementById('players-container');
@@ -254,7 +254,7 @@ function renderPlayerUI() {
         playersContainer.appendChild(card);
     });
 }
-window.renderPlayerUI = renderPlayerUI;
+window.renderPlayerUI = renderPlayerUI; // LEGACY-BRIDGE
 
 function showModal(title, desc, buttons = []) {
     const actionModal = document.getElementById('action-modal');
@@ -291,7 +291,7 @@ function showModal(title, desc, buttons = []) {
     actionModal.offsetHeight;
     actionModal.classList.remove('scale-0');
 }
-window.showModal = showModal;
+window.showModal = showModal; // LEGACY-BRIDGE
 
 function computePlayerStats(p) {
     const owned = boardData.filter(t => t.owner === p.id);
@@ -313,7 +313,7 @@ function computePlayerStats(p) {
     const colorGroups = Object.values(groupSets).filter(g => g.owned === g.total && g.total > 1).length;
     return { netWorth, propsCount, colorGroups };
 }
-window.computePlayerStats = computePlayerStats;
+window.computePlayerStats = computePlayerStats; // LEGACY-BRIDGE
 
 function hideModal() {
     const actionModal = document.getElementById('action-modal');
@@ -323,7 +323,7 @@ function hideModal() {
         if (actionModal.classList.contains('scale-0')) actionModal.classList.add('hidden');
     }, 500);
 }
-window.hideModal = hideModal;
+window.hideModal = hideModal; // LEGACY-BRIDGE
 
 function renderMortgagePanel() {
     const mortgagePanel = document.getElementById('mortgage-panel');
@@ -361,7 +361,7 @@ function renderMortgagePanel() {
         </div>
     `;
 }
-window.renderMortgagePanel = renderMortgagePanel;
+window.renderMortgagePanel = renderMortgagePanel; // LEGACY-BRIDGE
 
 function renderBuildMenu() {
     const buildSubmenu = document.getElementById('build-submenu');
@@ -396,4 +396,15 @@ function renderBuildMenu() {
         </div>
     `;
 }
-window.renderBuildMenu = renderBuildMenu;
+window.renderBuildMenu = renderBuildMenu; // LEGACY-BRIDGE
+
+// --- LEGACY BRIDGES (module -> window, for classic scripts & generated inline onclick handlers) ---
+window.logMsg = logMsg; // LEGACY-BRIDGE
+window.notify = notify; // LEGACY-BRIDGE
+window.updatePlayerUI = updatePlayerUI; // LEGACY-BRIDGE
+window.renderPlayerUI = renderPlayerUI; // LEGACY-BRIDGE
+window.computePlayerStats = computePlayerStats; // LEGACY-BRIDGE
+window.showModal = showModal; // LEGACY-BRIDGE
+window.hideModal = hideModal; // LEGACY-BRIDGE
+window.renderBuildMenu = renderBuildMenu; // LEGACY-BRIDGE
+window.renderMortgagePanel = renderMortgagePanel; // LEGACY-BRIDGE

@@ -1,7 +1,8 @@
+import { ctx3d } from './context.js';
+
 // --- LIGHTWEIGHT 3D ANIMATION HELPERS ---
 // All helpers honor Settings.reducedMotion and animSpeed.
 
-(function () {
     function isReduced() { return window.Settings && window.Settings.isReducedMotion(); }
     function speedMul() {
         if (!window.Settings) return 1;
@@ -306,7 +307,11 @@
     }
 
     // Backwards-compat global aliases
-    window.animateTokenHop = tokenHop;
-    window.applyMortgageVisual = applyMortgage;
-    window.Anim3D = { growIn, dustBurst, confettiBurst, moneyFly, tokenHop, applyMortgage, tilePulse, trailEmit };
-})();
+    window.animateTokenHop = tokenHop; // LEGACY-BRIDGE
+    window.applyMortgageVisual = applyMortgage; // LEGACY-BRIDGE
+    window.Anim3D = { growIn, dustBurst, confettiBurst, moneyFly, tokenHop, applyMortgage, tilePulse, trailEmit }; // LEGACY-BRIDGE
+
+// ESM exports — same function objects as the legacy window bridges above.
+export const Anim3D = window.Anim3D;
+export const animateTokenHop = window.animateTokenHop;
+export const applyMortgageVisual = window.applyMortgageVisual;

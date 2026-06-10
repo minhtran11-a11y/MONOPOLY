@@ -321,7 +321,7 @@ const MenuManager = {
 
 document.addEventListener('DOMContentLoaded', () => MenuManager.init());
 
-window.switchAuthTab = (tab) => {
+window.switchAuthTab = (tab) => { // LEGACY-BRIDGE
     if(window.SoundFX) window.SoundFX.click();
     const isLogin = tab === 'login';
     
@@ -356,7 +356,7 @@ let allRooms = []; // Global list of all rooms (public & private)
 let lobbyInterval = null;
 let currentLobbyPlayers = [];
 
-window.selectRoomType = (type) => {
+window.selectRoomType = (type) => { // LEGACY-BRIDGE
     if(window.SoundFX) window.SoundFX.click();
     selectedRoomType = type;
     const btnPublic = document.getElementById('room-type-public');
@@ -375,7 +375,7 @@ window.selectRoomType = (type) => {
     }
 };
 
-window.selectPlayerLimit = (limit) => {
+window.selectPlayerLimit = (limit) => { // LEGACY-BRIDGE
     if(window.SoundFX) window.SoundFX.click();
     selectedPlayerLimit = limit;
     
@@ -391,7 +391,7 @@ window.selectPlayerLimit = (limit) => {
     });
 };
 
-window.handleCreateRoom = () => {
+window.handleCreateRoom = () => { // LEGACY-BRIDGE
     if(window.SoundFX) window.SoundFX.click();
     const roomName = document.getElementById('room-name-input').value.trim();
     
@@ -458,7 +458,7 @@ function updatePublicRoomsUI() {
     list.innerHTML = html;
 }
 
-window.handleRefreshRooms = () => {
+window.handleRefreshRooms = () => { // LEGACY-BRIDGE
     if(window.SoundFX) window.SoundFX.click();
     const icon = document.getElementById('refresh-icon');
     icon.classList.add('animate-spin');
@@ -469,7 +469,7 @@ window.handleRefreshRooms = () => {
     }, 800);
 };
 
-window.handleJoinWithData = (roomName) => {
+window.handleJoinWithData = (roomName) => { // LEGACY-BRIDGE
     if(window.SoundFX) window.SoundFX.click();
     const room = allRooms.find(r => r.name === roomName);
     if (room) {
@@ -484,7 +484,7 @@ window.handleJoinWithData = (roomName) => {
     }
 };
 
-window.handleJoinRoom = () => {
+window.handleJoinRoom = () => { // LEGACY-BRIDGE
     if(window.SoundFX) window.SoundFX.click();
     const roomName = document.getElementById('join-room-input').value.trim();
     if (!roomName) {
@@ -561,14 +561,20 @@ function updateLobbyUI() {
     }
 }
 
-window.leaveLobby = () => {
+window.leaveLobby = () => { // LEGACY-BRIDGE
     if(window.SoundFX) window.SoundFX.click();
     if (lobbyInterval) clearInterval(lobbyInterval);
     MenuManager.showScreen('screen-online-detail');
 };
 
-window.startOnlineFromLobby = () => {
+window.startOnlineFromLobby = () => { // LEGACY-BRIDGE
     if(window.SoundFX) window.SoundFX.click();
     if (lobbyInterval) clearInterval(lobbyInterval);
     MenuManager.launchGame(selectedPlayerLimit, 'online');
 };
+
+window.MenuManager = MenuManager; // LEGACY-BRIDGE
+window.drawMenuLogo = drawMenuLogo; // LEGACY-BRIDGE
+window.updatePublicRoomsUI = updatePublicRoomsUI; // LEGACY-BRIDGE
+window.openLobby = openLobby; // LEGACY-BRIDGE
+window.updateLobbyUI = updateLobbyUI; // LEGACY-BRIDGE

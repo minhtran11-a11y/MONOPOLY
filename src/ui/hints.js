@@ -1,6 +1,5 @@
 // --- FIRST-HOVER TILE HINTS ---
 // Show a one-time hint when the player hovers over a tile type for the first time.
-(function () {
     const KEY = 'monopoly3d_hints_v1';
     const HINTS = {
         PROPERTY: 'Đây là ô đất. Nhấp để xem giá thuê chi tiết, hoặc dừng lại để mua.',
@@ -41,5 +40,6 @@
         try { localStorage.removeItem(KEY); } catch (e) {}
     }
 
-    window.HintHover = { maybeShow, reset };
-})();
+    window.HintHover = { maybeShow, reset }; // LEGACY-BRIDGE
+
+export const HintHover = window.HintHover;

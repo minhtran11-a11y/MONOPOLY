@@ -1,5 +1,4 @@
 // --- PROPERTY CARD POPUP (3D-feel via CSS transforms) ---
-(function () {
     const CARD_ID = 'property-card-modal';
 
     function ensureRoot() {
@@ -164,5 +163,6 @@
         if (e.key === 'Escape' && el && !el.classList.contains('hidden')) close();
     });
 
-    window.PropertyCard = { open, close };
-})();
+    window.PropertyCard = { open, close }; // LEGACY-BRIDGE
+
+export const PropertyCard = window.PropertyCard;

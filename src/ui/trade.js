@@ -1,7 +1,6 @@
 // --- TRADE NEGOTIATION UI (foundation) ---
 // Players can propose trades: money + properties offered vs requested.
 // Bot opponents accept based on a simple value-comparison heuristic.
-(function () {
     const ROOT_ID = 'trade-modal';
 
     function build() {
@@ -151,5 +150,6 @@
         if (window.SoundFX) window.SoundFX.click();
     }
 
-    window.TradeUI = { open, close };
-})();
+    window.TradeUI = { open, close }; // LEGACY-BRIDGE
+
+export const TradeUI = window.TradeUI;
