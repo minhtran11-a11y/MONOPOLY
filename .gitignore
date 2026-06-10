@@ -28,3 +28,6 @@ Desktop.ini
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# GAN harness screenshots (regenerable artifacts)
+gan-harness/shots/

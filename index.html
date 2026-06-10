@@ -93,7 +93,7 @@
             <h2 class="font-display text-5xl font-black text-gold-300 mb-16 tracking-[0.01em] text-center drop-shadow-[0_10px_30px_rgba(0,0,0,0.6)]">Chọn chế độ chơi</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
                 <button id="mode-bot-trigger" class="glass-panel p-12 flex flex-col items-center gap-6 group hover:border-gold-400 transition-all duration-500">
-                    <div class="w-24 h-24 bg-gold-400/10 ring-1 ring-gold-500/40 rounded-3xl flex items-center justify-center text-5xl group-hover:scale-110 transition-transform">🤖</div>
+                    <div class="w-24 h-24 bg-gold-400/10 ring-1 ring-gold-500/40 rounded-3xl flex items-center justify-center text-5xl group-hover:scale-110 transition-transform"><span class="glyph-gold">🤖</span></div>
                     <div class="text-center">
                         <h3 class="text-2xl font-black text-ivory uppercase mb-2">BOT SOLO</h3>
                         <p class="text-gold-300/70 text-sm font-bold uppercase tracking-widest">Đấu với máy (NPC)</p>
@@ -101,7 +101,7 @@
                 </button>
                 <div id="mode-online-trigger" class="glass-panel p-12 flex flex-col items-center gap-6 opacity-60 cursor-not-allowed border-gold-600/30 relative overflow-hidden grayscale">
                     <div class="absolute top-4 right-4 bg-son-600 text-gold-300 ring-1 ring-gold-400/60 text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg animate-pulse">SẮP RA MẮT</div>
-                    <div class="w-24 h-24 bg-son-600/15 ring-1 ring-gold-500/40 rounded-3xl flex items-center justify-center text-5xl">🌐</div>
+                    <div class="w-24 h-24 bg-son-600/15 ring-1 ring-gold-500/40 rounded-3xl flex items-center justify-center text-5xl"><span class="glyph-gold">🌐</span></div>
                     <div class="text-center">
                         <h3 class="text-2xl font-black text-ivory uppercase mb-2">ONLINE</h3>
                         <p class="text-gold-300/70 text-sm font-bold uppercase tracking-widest">Đang nâng cấp hệ thống</p>
@@ -184,11 +184,11 @@
             <h2 id="modal-title" class="font-display text-[2.6rem] leading-[1.05] font-black text-son-700 mb-3">Lượt của bạn</h2>
             <p id="modal-desc" class="text-lac-800/75 mb-8 font-bold text-lg">Đến lượt bạn lắc xí ngầu...</p>
             <div id="modal-buttons" class="flex justify-center gap-4 flex-wrap">
-                <button id="btn-roll" class="btn-action bg-indigo-600">ĐỔ XÍ NGẦU</button>
-                <button id="btn-build-menu" class="btn-action bg-orange-500 hidden">XÂY NHÀ</button>
-                <button id="btn-buy" class="btn-action bg-emerald-600 hidden">MUA ĐẤT</button>
-                <button id="btn-skip" class="btn-action bg-slate-500 hidden">BỎ QUA</button>
-                <button id="btn-end" class="btn-action bg-purple-600 hidden">KẾT THÚC LƯỢT</button>
+                <button id="btn-roll" class="btn-action btn-son">ĐỔ XÍ NGẦU</button>
+                <button id="btn-build-menu" class="btn-action btn-terracotta hidden">XÂY NHÀ</button>
+                <button id="btn-buy" class="btn-action btn-son hidden">MUA ĐẤT</button>
+                <button id="btn-skip" class="btn-action btn-taupe hidden">BỎ QUA</button>
+                <button id="btn-end" class="btn-action btn-gold hidden">KẾT THÚC LƯỢT</button>
             </div>
             <div id="build-submenu" class="hidden mt-6 pt-6 border-t border-black/5 space-y-3 max-h-60 overflow-y-auto custom-scrollbar"></div>
         </div>
