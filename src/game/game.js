@@ -49,6 +49,9 @@ const Game = {
     },
 
     startTurn() {
+        // ONLINE-MODE: the server (game-action) is authoritative — refresh the
+        // HUD only; no local turn loop, bot timers or local modals.
+        if (window._gameMode === 'online') { updatePlayerUI(); return; }
         const p = this.players[this.currentPlayerIndex];
         if (p.bankrupt) { this.nextTurn(); return; }
 
@@ -91,6 +94,7 @@ const Game = {
     },
 
     doBotTurn(p) {
+        if (window._gameMode === 'online') return; // ONLINE-MODE: no bot engine
         p.isThinking = true;
         // Camera focus already happened in startTurn — no double tween here.
         updatePlayerUI();
@@ -262,11 +266,14 @@ const Game = {
                 const btnBuy = document.getElementById('btn-buy');
                 const btnSkip = document.getElementById('btn-skip');
                 if (btnBuy) btnBuy.onclick = () => {
+                    // ONLINE-MODE: stale-closure guard — tileId resolved by the hook
+                    if (window._gameMode === 'online') { window._onlineSend?.({ type: 'BUY' }); return; }
                     hideModal();
                     this.executeBuyProperty(player, tile, tileIdx);
                     this.checkEndTurnPhase(isDouble);
                 };
                 if (btnSkip) btnSkip.onclick = () => {
+                    if (window._gameMode === 'online') { window._onlineSend?.({ type: 'SKIP_BUY' }); return; } // ONLINE-MODE
                     hideModal();
                     logMsg(`${player.name} đã từ chối mua.`);
                     this.checkEndTurnPhase(isDouble);
@@ -537,6 +544,7 @@ const Game = {
     },
 
     checkEndTurnPhase(isDouble) {
+        if (window._gameMode === 'online') return; // ONLINE-MODE: server drives turn flow
         if (Game.isProcessingTurn) return;
         if (Game.players.filter(p => !p.bankrupt).length <= 1) return;
         
@@ -574,6 +582,7 @@ const Game = {
                 }, 2000);
                 const btnEndA = document.getElementById('btn-end');
                 if (btnEndA) btnEndA.onclick = () => {
+                    if (window._gameMode === 'online') { window._onlineSend?.({ type: 'END_TURN' }); return; } // ONLINE-MODE
                     clearTimeout(autoEnd);
                     hideModal();
                     Game.nextTurn();
@@ -583,6 +592,7 @@ const Game = {
             // End Turn button always works
             const btnEndB = document.getElementById('btn-end');
             if (btnEndB) btnEndB.onclick = () => {
+                if (window._gameMode === 'online') { window._onlineSend?.({ type: 'END_TURN' }); return; } // ONLINE-MODE
                 hideModal();
                 Game.nextTurn();
             };
@@ -590,6 +600,7 @@ const Game = {
     },
 
     nextTurn() {
+        if (window._gameMode === 'online') return; // ONLINE-MODE: server advances turns
         // Centralized turn switching
         Game.isProcessingTurn = false;
         
@@ -620,6 +631,9 @@ function _bindRollButton() {
     const btnRoll = document.getElementById('btn-roll');
     if (!btnRoll) return;
     btnRoll.onclick = () => {
+        // ONLINE-MODE: route to the authoritative referee (hook installed by
+        // the MenuScreens online boot; dice are rolled server-side).
+        if (window._gameMode === 'online') { window._onlineSend?.({ type: 'ROLL' }); return; }
         if (window.isAnimating) return;
         hideModal();
         const p = Game.players[Game.currentPlayerIndex];
