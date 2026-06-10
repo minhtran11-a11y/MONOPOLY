@@ -1,3 +1,5 @@
+import { ctx3d } from './context.js';
+
 // --- DICE ROLL ANIMATION (simple: place dice on board, spin briefly, show result) ---
 function rollDiceAnimation(d1, d2, callback) {
     window.isAnimating = true;
@@ -75,3 +77,6 @@ function rollDiceAnimation(d1, d2, callback) {
 
     spinLoop();
 }
+
+export { rollDiceAnimation };
+window.rollDiceAnimation = rollDiceAnimation; // LEGACY-BRIDGE

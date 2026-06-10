@@ -1,3 +1,5 @@
+import { ctx3d } from './context.js';
+
 // --- BACKGROUND CITY SKYLINE + STAR FIELD ---
 // Procedural ambient backdrop. Performance-tier aware via Settings.
 
@@ -55,3 +57,6 @@ function createCitySkyline() {
     ctx3d.stars = new THREE.Points(starGeo, starMat);
     ctx3d.scene.add(ctx3d.stars);
 }
+
+export { createCitySkyline };
+window.createCitySkyline = createCitySkyline; // LEGACY-BRIDGE

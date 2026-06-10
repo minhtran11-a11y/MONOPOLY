@@ -1,3 +1,5 @@
+import { ctx3d } from './context.js';
+
 // --- POST-PROCESSING (bloom + vignette, tier aware) ---
 // Vignette shader applied after bloom for premium look.
 
@@ -52,3 +54,6 @@ function initPostProcessing() {
         window._vignettePass = vignettePass;
     }
 }
+
+export { initPostProcessing };
+window.initPostProcessing = initPostProcessing; // LEGACY-BRIDGE

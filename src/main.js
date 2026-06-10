@@ -10,3 +10,8 @@ import './services/toast.js';
 import './core/constants.js';
 import './core/utils.js';
 import './core/data.js';
+import './3d/context.js';
+import './3d/skyline.js';
+import './3d/engine.js';
+import './3d/postfx.js';
+import './3d/dice_anim.js';
