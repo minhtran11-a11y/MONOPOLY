@@ -44,7 +44,7 @@ function createCitySkyline() {
         }
         cityGroup.add(building);
     }
-    scene.add(cityGroup);
+    ctx3d.scene.add(cityGroup);
 
     // Starfield
     const starGeo = new THREE.BufferGeometry();
@@ -52,6 +52,6 @@ function createCitySkyline() {
     for (let i = 0; i < starCount * 3; i++) starPositions[i] = (Math.random() - 0.5) * 800;
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
     const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.8, transparent: true, opacity: 0.8 });
-    stars = new THREE.Points(starGeo, starMat);
-    scene.add(stars);
+    ctx3d.stars = new THREE.Points(starGeo, starMat);
+    ctx3d.scene.add(ctx3d.stars);
 }

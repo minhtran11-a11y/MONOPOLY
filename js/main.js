@@ -1,37 +1,37 @@
 // --- THREE.JS INITIALIZATION ---
 function init3D() {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0f172a);
+    ctx3d.scene = new THREE.Scene();
+    ctx3d.scene.background = new THREE.Color(0x0f172a);
     // Atmospheric fog: gives depth + softens distant skyline
-    scene.fog = new THREE.Fog(0x0f172a, 95, 320);
+    ctx3d.scene.fog = new THREE.Fog(0x0f172a, 95, 320);
 
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.set(0, 45, 80);
+    ctx3d.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+    ctx3d.camera.position.set(0, 45, 80);
 
     const tier = (window.Settings && window.Settings.graphicsTier()) || 'high';
     const isLow = tier === 'low';
     const isMed = tier === 'med';
 
-    renderer = new THREE.WebGLRenderer({ antialias: !isLow, powerPreference: isLow ? 'low-power' : 'high-performance' });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    ctx3d.renderer = new THREE.WebGLRenderer({ antialias: !isLow, powerPreference: isLow ? 'low-power' : 'high-performance' });
+    ctx3d.renderer.setSize(window.innerWidth, window.innerHeight);
     // Cap pixel ratio per tier to protect mobile GPUs
     const dpr = window.devicePixelRatio || 1;
-    renderer.setPixelRatio(isLow ? Math.min(dpr, 1) : isMed ? Math.min(dpr, 1.5) : Math.min(dpr, 2));
-    renderer.shadowMap.enabled = !isLow;
-    renderer.shadowMap.type = isMed ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
-    document.getElementById('canvas-container').appendChild(renderer.domElement);
-    
-    maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+    ctx3d.renderer.setPixelRatio(isLow ? Math.min(dpr, 1) : isMed ? Math.min(dpr, 1.5) : Math.min(dpr, 2));
+    ctx3d.renderer.shadowMap.enabled = !isLow;
+    ctx3d.renderer.shadowMap.type = isMed ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
+    document.getElementById('canvas-container').appendChild(ctx3d.renderer.domElement);
 
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2.1;
-    controls.minDistance = 30;
-    controls.maxDistance = 140;
+    ctx3d.maxAnisotropy = ctx3d.renderer.capabilities.getMaxAnisotropy();
+
+    ctx3d.controls = new THREE.OrbitControls(ctx3d.camera, ctx3d.renderer.domElement);
+    ctx3d.controls.enableDamping = true;
+    ctx3d.controls.dampingFactor = 0.05;
+    ctx3d.controls.maxPolarAngle = Math.PI / 2.1;
+    ctx3d.controls.minDistance = 30;
+    ctx3d.controls.maxDistance = 140;
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.40);
-    scene.add(ambientLight);
+    ctx3d.scene.add(ambientLight);
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.62);
     dirLight.position.set(50, 100, 50);
@@ -44,14 +44,14 @@ function init3D() {
     dirLight.shadow.camera.right = 100;
     dirLight.shadow.camera.top = 100;
     dirLight.shadow.camera.bottom = -100;
-    scene.add(dirLight);
+    ctx3d.scene.add(dirLight);
 
     createCenterLogo();
     createBoard();
     createDecks();
     createDice();
     createCitySkyline(); // Premium background
-    if (window.createCornerLandmarks) window.createCornerLandmarks(scene); // VN landmarks
+    if (window.createCornerLandmarks) window.createCornerLandmarks(ctx3d.scene); // VN landmarks
 
     // Lazy-load postprocessing CDN to keep LCP fast; init when ready
     if (window._loadPostFX) {
@@ -65,14 +65,14 @@ function init3D() {
     }
 
     // Expose live globals for cinematics / persistence / physics / debugging
-    window.scene = scene;
-    window.camera = camera;
-    window.controls = controls;
-    window.renderer = renderer;
+    window.scene = ctx3d.scene;
+    window.camera = ctx3d.camera;
+    window.controls = ctx3d.controls;
+    window.renderer = ctx3d.renderer;
     window.tweenCamera = tweenCamera;
-    window.boardMeshes = boardMeshes;
-    window.dice1 = dice1;
-    window.dice2 = dice2;
+    window.boardMeshes = ctx3d.boardMeshes;
+    window.dice1 = ctx3d.dice1;
+    window.dice2 = ctx3d.dice2;
 
     // Pre-warm dice physics on idle so the first roll uses real cannon-es
     if (window.DicePhysics) {
@@ -81,10 +81,10 @@ function init3D() {
     }
 
     window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        if (composer) composer.setSize(window.innerWidth, window.innerHeight);
+        ctx3d.camera.aspect = window.innerWidth / window.innerHeight;
+        ctx3d.camera.updateProjectionMatrix();
+        ctx3d.renderer.setSize(window.innerWidth, window.innerHeight);
+        if (ctx3d.composer) ctx3d.composer.setSize(window.innerWidth, window.innerHeight);
     });
     
     const raycaster = new THREE.Raycaster();
@@ -92,14 +92,14 @@ function init3D() {
     const tileInfo = document.getElementById('tile-info');
     
     // Click on tile → open property card popup
-    renderer.domElement.addEventListener('click', (e) => {
-        const r = renderer.domElement.getBoundingClientRect();
+    ctx3d.renderer.domElement.addEventListener('click', (e) => {
+        const r = ctx3d.renderer.domElement.getBoundingClientRect();
         mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1;
         mouse.y = -((e.clientY - r.top) / r.height) * 2 + 1;
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(boardMeshes);
+        raycaster.setFromCamera(mouse, ctx3d.camera);
+        const intersects = raycaster.intersectObjects(ctx3d.boardMeshes);
         if (intersects.length > 0 && window.PropertyCard) {
-            const tileId = intersects[0].object.userData.id;
+            const tileId = intersects[0].object.userData.tileId;
             if (tileId !== undefined && boardData[tileId]) {
                 window.PropertyCard.open(boardData[tileId]);
             }
@@ -121,11 +121,12 @@ function init3D() {
     window.addEventListener('mousemove', (e) => {
         mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(boardMeshes);
+        raycaster.setFromCamera(mouse, ctx3d.camera);
+        const intersects = raycaster.intersectObjects(ctx3d.boardMeshes);
 
         if (intersects.length > 0) {
-            const data = intersects[0].object.userData;
+            const ud = intersects[0].object.userData;
+            const data = boardData[ud.tileId];
             const hit = intersects[0].object;
 
             // Tile hover lift + group color glow rim (skip while animating)
@@ -194,32 +195,32 @@ function animateLoop() {
     const minFrameMs = _isMenuVisible() ? 100 : 0;
     if (now - _lastRenderT < minFrameMs) return;
     _lastRenderT = now;
-    if (isCameraAnimating && cameraAnimConfig) {
-        let now = Date.now(), progress = (now - cameraAnimConfig.startTime) / cameraAnimConfig.duration;
+    if (ctx3d.isCameraAnimating && ctx3d.cameraAnimConfig) {
+        let now = Date.now(), progress = (now - ctx3d.cameraAnimConfig.startTime) / ctx3d.cameraAnimConfig.duration;
         if (progress > 1) progress = 1;
         let ease = Utils.easeInOutCubic(progress);
-        camera.position.lerpVectors(cameraAnimConfig.startPos, cameraAnimConfig.endPos, ease);
-        controls.target.lerpVectors(cameraAnimConfig.startTarget, cameraAnimConfig.endTarget, ease);
-        if (progress === 1) { 
-            isCameraAnimating = false; 
-            if(controls) controls.enabled = true; 
-            if (cameraAnimConfig.onComplete) cameraAnimConfig.onComplete(); 
-            cameraAnimConfig = null; 
+        ctx3d.camera.position.lerpVectors(ctx3d.cameraAnimConfig.startPos, ctx3d.cameraAnimConfig.endPos, ease);
+        ctx3d.controls.target.lerpVectors(ctx3d.cameraAnimConfig.startTarget, ctx3d.cameraAnimConfig.endTarget, ease);
+        if (progress === 1) {
+            ctx3d.isCameraAnimating = false;
+            if(ctx3d.controls) ctx3d.controls.enabled = true;
+            if (ctx3d.cameraAnimConfig.onComplete) ctx3d.cameraAnimConfig.onComplete();
+            ctx3d.cameraAnimConfig = null;
         }
     }
-    if(controls && !isCameraAnimating) controls.update();
+    if(ctx3d.controls && !ctx3d.isCameraAnimating) ctx3d.controls.update();
     
     // Render with Bloom if available
-    if (composer) {
-        composer.render();
-    } else if(renderer && scene && camera) {
-        renderer.render(scene, camera);
+    if (ctx3d.composer) {
+        ctx3d.composer.render();
+    } else if(ctx3d.renderer && ctx3d.scene && ctx3d.camera) {
+        ctx3d.renderer.render(ctx3d.scene, ctx3d.camera);
     }
     
     // Animate stars
-    if (stars) {
-        stars.rotation.y += 0.0002;
-        stars.rotation.x += 0.0001;
+    if (ctx3d.stars) {
+        ctx3d.stars.rotation.y += 0.0002;
+        ctx3d.stars.rotation.x += 0.0001;
     }
     
     // Player tokens are static — no idle animation

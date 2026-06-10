@@ -1,17 +1,19 @@
-let scene, camera, renderer, controls;
-let boardMeshes = [];
-let maxAnisotropy = 1;
-
-let isCameraAnimating = false;
-let cameraAnimConfig = null;
+// Shared 3D context — single mutable object visible to all scripts (classic + ESM).
 // Initialized lazily inside init3D() — THREE is loaded on demand to keep LCP fast.
-let savedCameraPos = null;
-let savedCameraTarget = null;
-
-let dice1, dice2;
-let chanceDeck, chestDeck;
-let composer; // For Bloom effect
-let stars;    // For background atmosphere
+const ctx3d = {
+    scene: null, camera: null, renderer: null, controls: null,
+    boardMeshes: [],
+    maxAnisotropy: 1,
+    isCameraAnimating: false,
+    cameraAnimConfig: null,
+    savedCameraPos: null,
+    savedCameraTarget: null,
+    dice1: null, dice2: null,
+    chanceDeck: null, chestDeck: null,
+    composer: null, // For Bloom effect
+    stars: null,    // For background atmosphere
+};
+window.ctx3d = ctx3d; // LEGACY-BRIDGE
 
 // --- INITIALIZATION ---
 function createCenterLogo() {
@@ -72,11 +74,11 @@ function createCenterLogo() {
     centerMesh.rotation.x = -Math.PI / 2;
     centerMesh.position.y = 0.46;
     centerMesh.receiveShadow = true;
-    scene.add(centerMesh);
+    ctx3d.scene.add(centerMesh);
 }
 
 function createBoard() {
-    boardMeshes = [];
+    ctx3d.boardMeshes = [];
     for (let i = 0; i < 40; i++) {
         let x = 0, z = 0, sizeX = 6, sizeZ = 10, rotY = 0;
         
@@ -98,15 +100,15 @@ function createBoard() {
         mesh.rotation.y = rotY;
         mesh.castShadow = true; 
         mesh.receiveShadow = true;
-        mesh.userData = { ...boardData[i], position: mesh.position.clone() };
+        mesh.userData = { tileId: i, position: mesh.position.clone() };
 
         // Subtle edge highlight
         const edges = new THREE.EdgesGeometry(geo);
         const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x444444, transparent: true, opacity: 0.3 }));
         mesh.add(line);
 
-        scene.add(mesh);
-        boardMeshes.push(mesh);
+        ctx3d.scene.add(mesh);
+        ctx3d.boardMeshes.push(mesh);
     }
 }
 
@@ -362,7 +364,7 @@ function generateTileMaterials(tile, i) {
     }
 
     const texture = new THREE.CanvasTexture(canvas);
-    texture.anisotropy = maxAnisotropy;
+    texture.anisotropy = ctx3d.maxAnisotropy;
     // PBR-ish: aoMap requires UV2; we baked into base map for simplicity.
     const sideMat = new THREE.MeshStandardMaterial({
         color: baseColor, roughness: 0.85, metalness: 0.08
@@ -393,7 +395,7 @@ function createDeckMaterial(colorHex, text) {
     ctx.fillText(text, 200, 125);
     
     const texture = new THREE.CanvasTexture(canvas);
-    texture.anisotropy = maxAnisotropy;
+    texture.anisotropy = ctx3d.maxAnisotropy;
     return texture;
 }
 
@@ -403,15 +405,15 @@ function createDecks() {
 
     const chanceSideMat = new THREE.MeshStandardMaterial({ color: chanceColor, metalness: 0.2, roughness: 0.5 });
     const chanceTopMat = new THREE.MeshStandardMaterial({ map: createDeckMaterial('#ef4444', 'CƠ HỘI'), roughness: 0.5 });
-    chanceDeck = new THREE.Mesh(new THREE.BoxGeometry(8, 2, 5.5), [chanceSideMat, chanceSideMat, chanceTopMat, chanceSideMat, chanceSideMat, chanceSideMat]);
-    chanceDeck.position.set(18, 1.2, -18); chanceDeck.rotation.y = Math.PI / 4;
-    chanceDeck.castShadow = true; scene.add(chanceDeck);
+    ctx3d.chanceDeck = new THREE.Mesh(new THREE.BoxGeometry(8, 2, 5.5), [chanceSideMat, chanceSideMat, chanceTopMat, chanceSideMat, chanceSideMat, chanceSideMat]);
+    ctx3d.chanceDeck.position.set(18, 1.2, -18); ctx3d.chanceDeck.rotation.y = Math.PI / 4;
+    ctx3d.chanceDeck.castShadow = true; ctx3d.scene.add(ctx3d.chanceDeck);
     
     const chestSideMat = new THREE.MeshStandardMaterial({ color: chestColor, metalness: 0.2, roughness: 0.5 });
     const chestTopMat = new THREE.MeshStandardMaterial({ map: createDeckMaterial('#eab308', 'KHÍ VẬN'), roughness: 0.5 });
-    chestDeck = new THREE.Mesh(new THREE.BoxGeometry(8, 2, 5.5), [chestSideMat, chestSideMat, chestTopMat, chestSideMat, chestSideMat, chestSideMat]);
-    chestDeck.position.set(-18, 1.2, 18); chestDeck.rotation.y = Math.PI / 4 + Math.PI; // Rotate so text faces center
-    chestDeck.castShadow = true; scene.add(chestDeck);
+    ctx3d.chestDeck = new THREE.Mesh(new THREE.BoxGeometry(8, 2, 5.5), [chestSideMat, chestSideMat, chestTopMat, chestSideMat, chestSideMat, chestSideMat]);
+    ctx3d.chestDeck.position.set(-18, 1.2, 18); ctx3d.chestDeck.rotation.y = Math.PI / 4 + Math.PI; // Rotate so text faces center
+    ctx3d.chestDeck.castShadow = true; ctx3d.scene.add(ctx3d.chestDeck);
 }
 
 function createDice() {
@@ -424,11 +426,11 @@ function createDice() {
         ];
     };
     
-    dice1 = new THREE.Mesh(diceGeo, getDiceMats());
-    dice1.position.set(-3, 10, 0); dice1.castShadow = true; dice1.visible = false; scene.add(dice1);
-    
-    dice2 = new THREE.Mesh(diceGeo, getDiceMats());
-    dice2.position.set(3, 10, 0); dice2.castShadow = true; dice2.visible = false; scene.add(dice2);
+    ctx3d.dice1 = new THREE.Mesh(diceGeo, getDiceMats());
+    ctx3d.dice1.position.set(-3, 10, 0); ctx3d.dice1.castShadow = true; ctx3d.dice1.visible = false; ctx3d.scene.add(ctx3d.dice1);
+
+    ctx3d.dice2 = new THREE.Mesh(diceGeo, getDiceMats());
+    ctx3d.dice2.position.set(3, 10, 0); ctx3d.dice2.castShadow = true; ctx3d.dice2.visible = false; ctx3d.scene.add(ctx3d.dice2);
 }
 
 function createDiceTexture(number) {
@@ -558,7 +560,7 @@ function createBuilding(isHotel) {
 
 function update3DHouses(tileIdx) {
     const tile = boardData[tileIdx];
-    const tileMesh = boardMeshes[tileIdx];
+    const tileMesh = ctx3d.boardMeshes[tileIdx];
 
     const previousCount = (tile.houseMeshes && tile.houseMeshes.length) || 0;
     if (tile.houseMeshes) tile.houseMeshes.forEach(h => tileMesh.remove(h));
@@ -596,19 +598,19 @@ function update3DHouses(tileIdx) {
 
 
 function tweenCamera(endPos, endTarget, duration, callback) {
-    if(controls) controls.enabled = false;
-    cameraAnimConfig = {
-        startPos: camera.position.clone(), endPos: endPos.clone(),
-        startTarget: controls.target.clone(), endTarget: endTarget.clone(),
+    if(ctx3d.controls) ctx3d.controls.enabled = false;
+    ctx3d.cameraAnimConfig = {
+        startPos: ctx3d.camera.position.clone(), endPos: endPos.clone(),
+        startTarget: ctx3d.controls.target.clone(), endTarget: endTarget.clone(),
         startTime: Date.now(), duration: duration, onComplete: callback
     };
-    isCameraAnimating = true;
+    ctx3d.isCameraAnimating = true;
 }
 
 // rollDiceAnimation lives in js/dice_anim.js to keep engine.js < 800 LOC.
 
 function showCardAnimation(type, desc, colorHex, sourceZ, callback) {
-    isAnimating = true;
+    window.isAnimating = true;
     const canvas = document.createElement('canvas'); canvas.width = 500; canvas.height = 300;
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = colorHex; ctx.fillRect(0,0,500,300);
@@ -617,7 +619,7 @@ function showCardAnimation(type, desc, colorHex, sourceZ, callback) {
     ctx.fillText(type, 250, 90);
     ctx.font = '800 40px "Be Vietnam Pro", sans-serif'; Utils.wrapText(ctx, desc, 250, 170, 440, 50);
 
-    const tex = new THREE.CanvasTexture(canvas); tex.anisotropy = maxAnisotropy;
+    const tex = new THREE.CanvasTexture(canvas); tex.anisotropy = ctx3d.maxAnisotropy;
     const sideMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.8 });
     const faceMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8 });
     const cardMesh = new THREE.Mesh(new THREE.BoxGeometry(10, 0.2, 6), [sideMat, sideMat, faceMat, sideMat, sideMat, sideMat]);
@@ -625,19 +627,19 @@ function showCardAnimation(type, desc, colorHex, sourceZ, callback) {
     // Elevate card so it's visible from the current camera angle
     cardMesh.position.set(0, 8, 0); 
     cardMesh.rotation.set(0, 0, 0);
-    scene.add(cardMesh);
+    ctx3d.scene.add(cardMesh);
 
     // No camera movement — keep whatever angle the player chose
     setTimeout(() => {
-        scene.remove(cardMesh);
-        isAnimating = false;
+        ctx3d.scene.remove(cardMesh);
+        window.isAnimating = false;
         callback();
     }, 3500); 
 }
 
 function createPlayers(total, mode) {
     // Clear existing players
-    if (window.players) window.players.forEach(p => { if(p.mesh) scene.remove(p.mesh); });
+    if (window.players) window.players.forEach(p => { if(p.mesh) ctx3d.scene.remove(p.mesh); });
     window.players = [];
 
     for (let i = 0; i < total; i++) {
@@ -652,8 +654,8 @@ function createPlayers(total, mode) {
         }
 
         // Safety check for board initialization
-        if (boardMeshes && boardMeshes[0]) {
-            mesh.position.copy(boardMeshes[0].position);
+        if (ctx3d.boardMeshes && ctx3d.boardMeshes[0]) {
+            mesh.position.copy(ctx3d.boardMeshes[0].position);
         } else {
             mesh.position.set(32, 1.0, 32);
         }
@@ -663,7 +665,7 @@ function createPlayers(total, mode) {
         mesh.castShadow = true;
         // Tokens are oriented; rotate so they face inward toward center for variety
         mesh.rotation.y = Math.PI * (i / total);
-        scene.add(mesh);
+        ctx3d.scene.add(mesh);
 
         const pName = mode === 'bot'
             ? (i === 0 ? "Bạn" : `NPC ${i}`)

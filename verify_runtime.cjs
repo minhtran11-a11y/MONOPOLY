@@ -116,7 +116,18 @@ async function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
         await send('Runtime.evaluate', {
             expression: `MenuManager.launchGame(2, 'bot');`
         });
-        await wait(2500);
+        // Poll until launch completes — Three.js CDN download time varies in a
+        // fresh headless profile, so a fixed 2.5s wait races the init (max 20s).
+        let launched = false;
+        for (let i = 0; i < 40 && !launched; i++) {
+            await wait(500);
+            const chk = await send('Runtime.evaluate', {
+                expression: `!!(window.players && window.players.length > 0 && !document.getElementById('game-ui-layer').classList.contains('hidden'))`,
+                returnByValue: true
+            });
+            launched = chk.result && chk.result.result && chk.result.result.value === true;
+        }
+        if (!launched) errors.push('LAUNCH_TIMEOUT: game did not initialize within 20s');
 
         const ingame = await send('Runtime.evaluate', {
             expression: `JSON.stringify({

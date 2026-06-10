@@ -29,10 +29,10 @@ const VignetteShader = {
 function initPostProcessing() {
     const tier = (window.Settings && window.Settings.graphicsTier()) || 'high';
     const bloomStrength = tier === 'low' ? 0.0 : (tier === 'med' ? 0.25 : 0.4);
-    const renderScene = new THREE.RenderPass(scene, camera);
+    const renderScene = new THREE.RenderPass(ctx3d.scene, ctx3d.camera);
 
-    composer = new THREE.EffectComposer(renderer);
-    composer.addPass(renderScene);
+    ctx3d.composer = new THREE.EffectComposer(ctx3d.renderer);
+    ctx3d.composer.addPass(renderScene);
 
     if (bloomStrength > 0) {
         const bloomPass = new THREE.UnrealBloomPass(
@@ -42,13 +42,13 @@ function initPostProcessing() {
         bloomPass.threshold = 0.85;
         bloomPass.strength = bloomStrength;
         bloomPass.radius = 0.3;
-        composer.addPass(bloomPass);
+        ctx3d.composer.addPass(bloomPass);
     }
 
     if (tier !== 'low' && THREE.ShaderPass) {
         const vignettePass = new THREE.ShaderPass(VignetteShader);
         vignettePass.renderToScreen = true;
-        composer.addPass(vignettePass);
+        ctx3d.composer.addPass(vignettePass);
         window._vignettePass = vignettePass;
     }
 }

@@ -1,7 +1,7 @@
 // --- DICE ROLL ANIMATION (simple: place dice on board, spin briefly, show result) ---
 function rollDiceAnimation(d1, d2, callback) {
     window.isAnimating = true;
-    dice1.visible = true; dice2.visible = true;
+    ctx3d.dice1.visible = true; ctx3d.dice2.visible = true;
 
     const overlay = document.getElementById('dice-overlay');
     const d1ui = document.getElementById('dice-1-ui');
@@ -13,10 +13,10 @@ function rollDiceAnimation(d1, d2, callback) {
 
     // Place dice directly on the board center (center logo area)
     const BOARD_Y = 2.4; // board surface(1.0) + half-dice(1.4)
-    dice1.position.set(-3.5, BOARD_Y, 2);
-    dice2.position.set( 3.5, BOARD_Y, 2);
-    dice1.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-    dice2.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    ctx3d.dice1.position.set(-3.5, BOARD_Y, 2);
+    ctx3d.dice2.position.set( 3.5, BOARD_Y, 2);
+    ctx3d.dice1.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    ctx3d.dice2.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
 
     // Spin animation for 600ms then snap to correct face
     const SPIN_DURATION = 600;
@@ -25,10 +25,10 @@ function rollDiceAnimation(d1, d2, callback) {
     function spinLoop() {
         const elapsed = Date.now() - startTime;
         if (elapsed < SPIN_DURATION) {
-            dice1.rotation.x += 0.25;
-            dice1.rotation.y += 0.18;
-            dice2.rotation.x += 0.18;
-            dice2.rotation.y += 0.25;
+            ctx3d.dice1.rotation.x += 0.25;
+            ctx3d.dice1.rotation.y += 0.18;
+            ctx3d.dice2.rotation.x += 0.18;
+            ctx3d.dice2.rotation.y += 0.25;
             // Randomize UI numbers while spinning
             if (Math.floor(elapsed / 80) % 2 === 0) {
                 d1ui.innerText = Math.floor(Math.random() * 6) + 1;
@@ -48,8 +48,8 @@ function rollDiceAnimation(d1, d2, callback) {
                 }
             };
             const r1 = faceRot(d1), r2 = faceRot(d2);
-            dice1.rotation.set(r1.x, r1.y, r1.z);
-            dice2.rotation.set(r2.x, r2.y, r2.z);
+            ctx3d.dice1.rotation.set(r1.x, r1.y, r1.z);
+            ctx3d.dice2.rotation.set(r2.x, r2.y, r2.z);
 
             d1ui.innerText = d1;
             d2ui.innerText = d2;
@@ -64,8 +64,8 @@ function rollDiceAnimation(d1, d2, callback) {
                 overlay.classList.add('opacity-0', 'scale-50');
                 overlay.classList.remove('opacity-100', 'scale-100');
                 setTimeout(() => {
-                    dice1.visible = false;
-                    dice2.visible = false;
+                    ctx3d.dice1.visible = false;
+                    ctx3d.dice2.visible = false;
                     window.isAnimating = false;
                     callback();
                 }, 400);

@@ -15,15 +15,15 @@ const Game = {
             if(t.type === TILE_TYPES.PROPERTY || t.type === TILE_TYPES.RAILROAD || t.type === TILE_TYPES.UTILITY) {
                 t.owner = null; 
                 t.houses = 0;
-                if(t.houseMeshes) { 
-                    const mesh = boardMeshes[t.id]; 
-                    if (mesh) t.houseMeshes.forEach(h => mesh.remove(h)); 
-                    t.houseMeshes = []; 
+                if(t.houseMeshes) {
+                    const mesh = ctx3d.boardMeshes[t.id];
+                    if (mesh) t.houseMeshes.forEach(h => mesh.remove(h));
+                    t.houseMeshes = [];
                 }
-                if(t.ownerMesh) { 
-                    const mesh = boardMeshes[t.id]; 
-                    if (mesh) mesh.remove(t.ownerMesh); 
-                    t.ownerMesh = null; 
+                if(t.ownerMesh) {
+                    const mesh = ctx3d.boardMeshes[t.id];
+                    if (mesh) mesh.remove(t.ownerMesh);
+                    t.ownerMesh = null;
                 }
             }
         });
@@ -187,7 +187,7 @@ const Game = {
 
         path.forEach((tileIdx, i) => {
             setTimeout(() => {
-                let tilePos = boardMeshes[tileIdx].position;
+                let tilePos = ctx3d.boardMeshes[tileIdx].position;
                 player.mesh.position.x = tilePos.x + (player.id % 2 === 0 ? 1.5 : -1.5);
                 player.mesh.position.z = tilePos.z + (player.id > 1 ? 1.5 : -1.5);
 
@@ -209,8 +209,8 @@ const Game = {
                     setTimeout(() => {
                         window.isAnimating = false;
                         // Pulse the destination tile so player can see exactly where they landed
-                        if (window.Anim3D && boardMeshes[tileIdx]) {
-                            window.Anim3D.tilePulse(boardMeshes[tileIdx]);
+                        if (window.Anim3D && ctx3d.boardMeshes[tileIdx]) {
+                            window.Anim3D.tilePulse(ctx3d.boardMeshes[tileIdx]);
                         }
                         this.handleSpaceLanded(player, tileIdx, isDouble);
                     }, 400);
@@ -301,7 +301,7 @@ const Game = {
             if (player.isBot) this.botChat(player, 'jail');
             player.inJail = true;
             player.position = 10;
-            player.mesh.position.copy(boardMeshes[10].position);
+            player.mesh.position.copy(ctx3d.boardMeshes[10].position);
             player.mesh.position.y = 2.5;
             isDouble = false; 
         } else if (tile.type === TILE_TYPES.CHANCE || tile.type === TILE_TYPES.CHEST) {
@@ -322,7 +322,7 @@ const Game = {
         if (player.isBot) this.botChat(player, 'jail');
         player.inJail = true;
         player.position = 10;
-        player.mesh.position.copy(boardMeshes[10].position);
+        player.mesh.position.copy(ctx3d.boardMeshes[10].position);
         player.mesh.position.y = 2.5;
         this.checkEndTurnPhase(false);
     },
@@ -441,7 +441,7 @@ const Game = {
         
         // Local posZ = 4.7 is the outer edge for all tiles due to engine.js rotation logic
         ownerIndicator.position.set(0, 0.58, 4.7); 
-        boardMeshes[tileIdx].add(ownerIndicator);
+        ctx3d.boardMeshes[tileIdx].add(ownerIndicator);
         tile.ownerMesh = ownerIndicator;
         updatePlayerUI();
     },
@@ -501,13 +501,13 @@ const Game = {
         logMsg(bMsg);
         if(window.Toast) window.Toast.show(bMsg, { type: 'error', icon: '💀', ttl: 5000 });
         p.bankrupt = true;
-        scene.remove(p.mesh);
+        ctx3d.scene.remove(p.mesh);
         
         boardData.forEach(t => {
             if (t.owner === p.id) {
                 t.owner = null;
-                if (t.ownerMesh) { boardMeshes[t.id].remove(t.ownerMesh); t.ownerMesh = null; }
-                if (t.houseMeshes) { t.houseMeshes.forEach(h => boardMeshes[t.id].remove(h)); t.houseMeshes = []; t.houses = 0; }
+                if (t.ownerMesh) { ctx3d.boardMeshes[t.id].remove(t.ownerMesh); t.ownerMesh = null; }
+                if (t.houseMeshes) { t.houseMeshes.forEach(h => ctx3d.boardMeshes[t.id].remove(h)); t.houseMeshes = []; t.houses = 0; }
             }
         });
 

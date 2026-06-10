@@ -212,9 +212,9 @@
 
     // Mortgaged-property overlay: dim houses + 3D red "X"
     function applyMortgage(tileIdx) {
-        if (typeof boardData === 'undefined' || typeof boardMeshes === 'undefined') return;
+        if (typeof boardData === 'undefined' || typeof ctx3d === 'undefined') return;
         const tile = boardData[tileIdx];
-        const tileMesh = boardMeshes[tileIdx];
+        const tileMesh = ctx3d.boardMeshes[tileIdx];
         if (!tile || !tileMesh) return;
 
         if (tile.mortgageMesh) {
