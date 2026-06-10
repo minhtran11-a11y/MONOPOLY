@@ -28,19 +28,23 @@
         world.defaultContactMaterial.restitution = 0.35;
         world.defaultContactMaterial.friction = 0.18;
 
-        // Ground plane at y=0
+        // Ground plane at the BOARD SURFACE (y=1.0) — matches dice_anim's
+        // BOARD_Y = 2.4 (surface 1.0 + half-dice 1.4) so settled dice rest ON
+        // the board instead of sinking half a die into it.
         const groundShape = new CANNON.Plane();
         ground = new CANNON.Body({ mass: 0, shape: groundShape });
         ground.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+        ground.position.set(0, 1.0, 0);
         world.addBody(ground);
 
-        // Soft invisible walls so dice can't fly off-board
+        // Soft invisible walls keep dice in the CENTER area of the board
+        // (inside the tile ring) where the camera reads them best.
         const wallShape = new CANNON.Plane();
         const walls = [
-            { pos: [ 30, 0, 0], axis: [0, 1, 0], ang:  Math.PI / 2 },
-            { pos: [-30, 0, 0], axis: [0, 1, 0], ang: -Math.PI / 2 },
-            { pos: [0, 0,  30], axis: [0, 1, 0], ang:  Math.PI },
-            { pos: [0, 0, -30], axis: [0, 1, 0], ang:  0 }
+            { pos: [ 12, 0, 0], axis: [0, 1, 0], ang:  Math.PI / 2 },
+            { pos: [-12, 0, 0], axis: [0, 1, 0], ang: -Math.PI / 2 },
+            { pos: [0, 0,  12], axis: [0, 1, 0], ang:  Math.PI },
+            { pos: [0, 0, -12], axis: [0, 1, 0], ang:  0 }
         ];
         walls.forEach(w => {
             const b = new CANNON.Body({ mass: 0, shape: wallShape });
