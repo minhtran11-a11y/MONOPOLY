@@ -25,7 +25,7 @@
         const CANNON = window.CANNON;
         world = new CANNON.World({ gravity: new CANNON.Vec3(0, -22, 0) });
         world.allowSleep = true;
-        world.defaultContactMaterial.restitution = 0.35;
+        world.defaultContactMaterial.restitution = 0.28; // felt-like, low bounce
         world.defaultContactMaterial.friction = 0.18;
 
         // Ground plane at the BOARD SURFACE (y=1.0) — matches dice_anim's
@@ -52,6 +52,13 @@
             b.quaternion.setFromAxisAngle(new CANNON.Vec3(w.axis[0], w.axis[1], w.axis[2]), w.ang);
             world.addBody(b);
         });
+
+        // Invisible ceiling: a freak dice-on-dice impact can convert spin into
+        // a vertical launch — physically cap every bounce below hand height.
+        const ceiling = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
+        ceiling.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2);
+        ceiling.position.set(0, 9, 0);
+        world.addBody(ceiling);
 
         // Dice bodies (Three meshes are 2.8 wide → half-extent 1.4)
         meshes = [window.dice1, window.dice2];
@@ -107,37 +114,44 @@
         }
         meshes.forEach(m => { m.visible = true; });
 
-        // Reset & impulse — a LOW, mostly-horizontal throw from just inside the
-        // walls so the dice skip and tumble ACROSS the board surface (a hand
-        // rolling dice onto the table), never raining down from the sky.
+        // Reset & impulse — HAND-DROP throw: dice start at hand height just
+        // above the table, tossed gently down-and-forward with strong spin.
+        // They hit the felt within ~0.5s, bounce once or twice, then ROLL on
+        // the surface until they stop — like tipping dice out of a cupped hand.
         bodies.forEach((b, i) => {
             b.wakeUp();
+            // Separate z-lanes so the dice never meet head-on mid-air (a spin-
+            // loaded box collision can launch one die way above the table).
             b.position.set(
-                i === 0 ? -9 : 9,                 // just inside the ±12 walls
-                3.6 + Math.random() * 1.2,        // barely above the felt (rest height 2.4)
-                (Math.random() - 0.5) * 5
+                (i === 0 ? -5 : 5) + (Math.random() - 0.5) * 2,  // above the center area
+                6.5 + Math.random() * 1.5,                        // hand height (~4 units above the felt)
+                (i === 0 ? -2.5 : 2.5) + (Math.random() - 0.5) * 1.5
             );
             b.velocity.set(
-                (i === 0 ? 1 : -1) * (11 + Math.random() * 4),  // strong horizontal, toward each other
-                -1,                                              // gentle downward — first contact is immediate
-                (Math.random() - 0.5) * 7
+                (i === 0 ? 1 : -1) * (4.5 + Math.random() * 2.5), // gentle forward toss
+                -2.5,                                              // tipped downward out of the hand
+                (Math.random() - 0.5) * 3
             );
             b.angularVelocity.set(
-                (Math.random() - 0.5) * 18,
-                (Math.random() - 0.5) * 18,
-                (Math.random() - 0.5) * 18
+                (Math.random() - 0.5) * 14,
+                (Math.random() - 0.5) * 14,
+                (Math.random() - 0.5) * 14
             );
             b.quaternion.setFromEuler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
         });
 
-        const startTime = performance.now();
         const FIXED_DT = 1 / 60;
-        const MAX_MS = 3500;
-        let lastT = startTime;
+        const MAX_SIM_MS = 3500;     // SIMULATED time budget — a hidden tab pauses
+        let simElapsed = 0;          // rAF, so the clock must pause with it (no
+        let lastT = performance.now(); // more mid-air timeouts after tab switches)
+
+        const REST_Y = 2.4;          // ground (1.0) + half-die (1.4)
+        const CLAMP_XZ = 10;         // keep landed dice visually inside the walls
 
         function step(now) {
             const dt = Math.min(0.05, (now - lastT) / 1000);
             lastT = now;
+            simElapsed += dt * 1000;
             world.step(FIXED_DT, dt, 3);
             // Sync mesh from body
             bodies.forEach((b, i) => {
@@ -145,32 +159,63 @@
                 meshes[i].quaternion.set(b.quaternion.x, b.quaternion.y, b.quaternion.z, b.quaternion.w);
             });
             const allRest = bodies.every(isResting);
-            const elapsed = now - startTime;
-            if (allRest || elapsed > MAX_MS) {
-                // Snap final orientation to the desired face over 250ms
-                const targetQ = [faceQuat(d1), faceQuat(d2)];
-                const startQ = bodies.map(b => ({
-                    x: b.quaternion.x, y: b.quaternion.y, z: b.quaternion.z, w: b.quaternion.w
-                }));
-                const tStart = performance.now();
-                function snap(now2) {
-                    const t = Math.min(1, (now2 - tStart) / 250);
-                    bodies.forEach((b, i) => {
-                        const sq = startQ[i], tq = targetQ[i];
-                        // Slerp via THREE.Quaternion for convenience
-                        const a = new THREE.Quaternion(sq.x, sq.y, sq.z, sq.w);
-                        const c = new THREE.Quaternion(tq.x, tq.y, tq.z, tq.w);
-                        a.slerp(c, t);
-                        meshes[i].quaternion.copy(a);
-                    });
-                    if (t < 1) requestAnimationFrame(snap);
-                    else if (callback) callback(true);
-                }
-                requestAnimationFrame(snap);
+            if (allRest || simElapsed > MAX_SIM_MS) {
+                beginSnap();
                 return;
             }
             requestAnimationFrame(step);
         }
+
+        // Final 250ms: slerp orientation onto the rolled faces AND lerp the
+        // POSITION onto the felt. Even a forced timeout (die still airborne)
+        // lands it on the table — a hovering die is impossible by construction.
+        function beginSnap() {
+            const targetQ = [faceQuat(d1), faceQuat(d2)];
+            const startQ = bodies.map(b => ({
+                x: b.quaternion.x, y: b.quaternion.y, z: b.quaternion.z, w: b.quaternion.w
+            }));
+            const startP = bodies.map(b => ({ x: b.position.x, y: b.position.y, z: b.position.z }));
+
+            // Landing spots: current x/z clamped inside the walls...
+            const targetP = startP.map(p => ({
+                x: Math.max(-CLAMP_XZ, Math.min(CLAMP_XZ, p.x)),
+                y: REST_Y,
+                z: Math.max(-CLAMP_XZ, Math.min(CLAMP_XZ, p.z)),
+            }));
+            // ...and pushed apart if the two dice would interpenetrate (size 2.8).
+            const dx = targetP[1].x - targetP[0].x, dz = targetP[1].z - targetP[0].z;
+            const dist = Math.hypot(dx, dz);
+            if (dist < 3.2) {
+                const nx = dist > 0.01 ? dx / dist : 1, nz = dist > 0.01 ? dz / dist : 0;
+                const push = (3.2 - dist) / 2;
+                targetP[0].x -= nx * push; targetP[0].z -= nz * push;
+                targetP[1].x += nx * push; targetP[1].z += nz * push;
+            }
+
+            const tStart = performance.now();
+            function snap(now2) {
+                const t = Math.min(1, (now2 - tStart) / 250);
+                const ease = t * (2 - t); // easeOutQuad — settles, not slams
+                bodies.forEach((b, i) => {
+                    const sq = startQ[i], tq = targetQ[i];
+                    // Slerp via THREE.Quaternion for convenience
+                    const a = new THREE.Quaternion(sq.x, sq.y, sq.z, sq.w);
+                    const c = new THREE.Quaternion(tq.x, tq.y, tq.z, tq.w);
+                    a.slerp(c, ease);
+                    meshes[i].quaternion.copy(a);
+                    const sp = startP[i], tp = targetP[i];
+                    meshes[i].position.set(
+                        sp.x + (tp.x - sp.x) * ease,
+                        sp.y + (tp.y - sp.y) * ease,
+                        sp.z + (tp.z - sp.z) * ease
+                    );
+                });
+                if (t < 1) requestAnimationFrame(snap);
+                else if (callback) callback(true);
+            }
+            requestAnimationFrame(snap);
+        }
+
         requestAnimationFrame(step);
     }
 
