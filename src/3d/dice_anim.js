@@ -1,52 +1,30 @@
 import { ctx3d } from './context.js';
 
-// --- DICE ROLL ANIMATION ---
-// Primary path: real cannon-es physics throw (DicePhysics) — dice tumble,
-// bounce and settle on the board, then slerp onto the rolled faces.
-// Fallback: legacy scripted spin (reduced motion, physics not loaded yet,
-// or a physics failure mid-roll).
+// --- DICE ROLL ANIMATION (3D only — the 2D result overlay was removed) ---
+// Primary path: real cannon-es physics throw (DicePhysics) — dice skip and
+// tumble LOW across the board surface, settle, then slerp onto the rolled
+// faces. Fallback: legacy scripted spin (reduced motion, physics not loaded
+// yet, or a physics failure mid-roll).
 function rollDiceAnimation(d1, d2, callback) {
     window.isAnimating = true;
     ctx3d.dice1.visible = true; ctx3d.dice2.visible = true;
 
-    const overlay = document.getElementById('dice-overlay');
-    const d1ui = document.getElementById('dice-1-ui');
-    const d2ui = document.getElementById('dice-2-ui');
-    overlay.classList.remove('opacity-0', 'scale-50');
-    overlay.classList.add('opacity-100', 'scale-100');
-
     const isDouble = (d1 === d2);
 
-    // Overlay numbers cycle while the dice are in motion (both paths)
-    let cycling = true;
-    (function cycleUi() {
-        if (!cycling) return;
-        d1ui.innerText = Math.floor(Math.random() * 6) + 1;
-        d2ui.innerText = Math.floor(Math.random() * 6) + 1;
-        setTimeout(cycleUi, 90);
-    })();
-
-    // Shared finale: reveal result, celebrate doubles, hide everything, release the lock
+    // Shared finale: let players READ the 3D faces, celebrate doubles,
+    // then hide the dice and release the animation lock.
     function finale() {
-        cycling = false;
-        d1ui.innerText = d1;
-        d2ui.innerText = d2;
-
         if (isDouble && window.Anim3D && window.scene) {
             window.Anim3D.confettiBurst(window.scene, 40, 1200);
             if (window.Toast) window.Toast.show(`✨ Đôi ${d1}!`, { type: 'success', icon: '✨' });
         }
 
         setTimeout(() => {
-            overlay.classList.add('opacity-0', 'scale-50');
-            overlay.classList.remove('opacity-100', 'scale-100');
-            setTimeout(() => {
-                ctx3d.dice1.visible = false;
-                ctx3d.dice2.visible = false;
-                window.isAnimating = false;
-                callback();
-            }, 400);
-        }, isDouble ? 1500 : 1000);
+            ctx3d.dice1.visible = false;
+            ctx3d.dice2.visible = false;
+            window.isAnimating = false;
+            callback();
+        }, isDouble ? 1800 : 1300);
     }
 
     // FALLBACK: place on the board center, spin briefly, snap to the result face

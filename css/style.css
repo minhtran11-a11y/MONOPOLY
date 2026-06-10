@@ -297,11 +297,6 @@ body {
     #tile-info #tile-color { width: 2.5rem !important; height: 2.5rem !important; }
     #tile-info #tile-name { font-size: 1rem !important; }
     #tile-info #tile-price { font-size: 0.75rem !important; }
-    /* Dice overlay scale down */
-    #dice-overlay .flex.gap-8 { gap: 1rem !important; padding: 1.25rem !important; }
-    #dice-overlay #dice-1-ui, #dice-overlay #dice-2-ui {
-        width: 4.5rem !important; height: 4.5rem !important; font-size: 2.25rem !important;
-    }
 }
 
 /* Tablet adjustments */

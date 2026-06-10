@@ -107,15 +107,25 @@
         }
         meshes.forEach(m => { m.visible = true; });
 
-        // Reset & impulse
+        // Reset & impulse — a LOW, mostly-horizontal throw from just inside the
+        // walls so the dice skip and tumble ACROSS the board surface (a hand
+        // rolling dice onto the table), never raining down from the sky.
         bodies.forEach((b, i) => {
             b.wakeUp();
-            b.position.set(i === 0 ? -6 : 6, 14 + Math.random() * 4, (Math.random() - 0.5) * 4);
-            b.velocity.set((i === 0 ? 8 : -8) + (Math.random() - 0.5) * 2, -3, (Math.random() - 0.5) * 6);
+            b.position.set(
+                i === 0 ? -9 : 9,                 // just inside the ±12 walls
+                3.6 + Math.random() * 1.2,        // barely above the felt (rest height 2.4)
+                (Math.random() - 0.5) * 5
+            );
+            b.velocity.set(
+                (i === 0 ? 1 : -1) * (11 + Math.random() * 4),  // strong horizontal, toward each other
+                -1,                                              // gentle downward — first contact is immediate
+                (Math.random() - 0.5) * 7
+            );
             b.angularVelocity.set(
-                (Math.random() - 0.5) * 14,
-                (Math.random() - 0.5) * 14,
-                (Math.random() - 0.5) * 14
+                (Math.random() - 0.5) * 18,
+                (Math.random() - 0.5) * 18,
+                (Math.random() - 0.5) * 18
             );
             b.quaternion.setFromEuler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
         });
