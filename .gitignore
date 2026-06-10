@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output & coverage
+dist/
+coverage/
+
+# Environment (Supabase keys etc.)
+.env
+.env.*
+!.env.example
+
+# Generated reports & test artifacts
+lighthouse-report.json
+*.log
+npm-debug.log*
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code local settings
+.claude/settings.local.json
