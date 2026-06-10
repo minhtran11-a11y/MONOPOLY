@@ -19,77 +19,10 @@
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700;900&display=optional" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700;900&display=optional" rel="stylesheet"></noscript>
 
-    <!-- Critical inline CSS so the intro screen renders before Tailwind/style.css
-         finish loading — keeps LCP fast without a build step. Tailwind enhances
-         everything once available. -->
-    <!-- Critical CSS moved to external file for cleaner structure -->
-    <link rel="stylesheet" href="css/critical.css">
-
-    <!-- Tailwind loads async so it never blocks LCP. Menu uses critical CSS above
-         until Tailwind enhances it. -->
-    <script async src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Three.js core + extras + confetti lazy-loaded only when game launches.
-         Menu page is fully styled without Three.js → keeps LCP fast. -->
-    <script>
-    window._loadThreeJS = function () {
-        if (window._threeLoaded) return Promise.resolve();
-        window._threeLoaded = true;
-        const files = [
-            'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
-            'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js'
-        ];
-        return files.reduce((p, src) => p.then(() => new Promise((res, rej) => {
-            const s = document.createElement('script');
-            s.src = src; s.onload = res; s.onerror = rej;
-            document.head.appendChild(s);
-        })), Promise.resolve());
-    };
-    window._loadPostFX = function () {
-        if (window._postFxLoaded) return Promise.resolve();
-        window._postFxLoaded = true;
-        const SRC = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js';
-        const files = [
-            SRC + '/postprocessing/EffectComposer.js',
-            SRC + '/postprocessing/RenderPass.js',
-            SRC + '/postprocessing/ShaderPass.js',
-            SRC + '/shaders/CopyShader.js',
-            SRC + '/shaders/LuminosityHighPassShader.js',
-            SRC + '/postprocessing/UnrealBloomPass.js',
-            'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js'
-        ];
-        return files.reduce((p, src) => p.then(() => new Promise((res, rej) => {
-            const s = document.createElement('script');
-            s.src = src; s.onload = res; s.onerror = rej;
-            document.head.appendChild(s);
-        })), Promise.resolve());
-    };
-    </script>
-
-    <!-- style.css loads non-blocking; critical menu styles are inline above. -->
-    <link rel="preload" href="css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="css/style.css"></noscript>
-    <script>
-        // Tailwind loads async; wait for global before applying config.
-        (function () {
-            const cfg = {
-                theme: {
-                    extend: {
-                        fontFamily: { sans: ['Be Vietnam Pro', 'sans-serif'] },
-                        animation: { 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
-                    }
-                }
-            };
-            function apply() {
-                if (typeof tailwind !== 'undefined') { tailwind.config = cfg; return true; }
-                return false;
-            }
-            if (!apply()) {
-                const id = setInterval(() => { if (apply()) clearInterval(id); }, 50);
-                setTimeout(() => clearInterval(id), 5000);
-            }
-        })();
-    </script>
+    <!-- CSS (Tailwind build-time + style.css) and the lazy Three.js/postFX loaders
+         are bundled through /src/main.js — no CDN dependencies remain. -->
+    <!-- Three.js + confetti are npm deps, lazy-loaded via dynamic import() only
+         when the game launches, preserving the fast-LCP menu strategy. -->
 </head>
 
 <body class="bg-slate-900 text-slate-100 overflow-hidden font-sans">
@@ -439,7 +372,5 @@
     <!-- Scripts: ESM entry first (module + defer share the in-order after-parse list),
          then the remaining classic scripts in their original order. -->
     <script type="module" src="/src/main.js"></script>
-    <script defer src="js/dice_physics.js"></script>
-    <script defer src="js/main.js"></script>
 </body>
 </html>

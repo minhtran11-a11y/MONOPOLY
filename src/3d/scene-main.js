@@ -1,3 +1,5 @@
+import { ctx3d } from './context.js';
+
 // --- THREE.JS INITIALIZATION ---
 function init3D() {
     ctx3d.scene = new THREE.Scene();
@@ -65,14 +67,14 @@ function init3D() {
     }
 
     // Expose live globals for cinematics / persistence / physics / debugging
-    window.scene = ctx3d.scene;
-    window.camera = ctx3d.camera;
-    window.controls = ctx3d.controls;
-    window.renderer = ctx3d.renderer;
-    window.tweenCamera = tweenCamera;
-    window.boardMeshes = ctx3d.boardMeshes;
-    window.dice1 = ctx3d.dice1;
-    window.dice2 = ctx3d.dice2;
+    window.scene = ctx3d.scene; // LEGACY-BRIDGE
+    window.camera = ctx3d.camera; // LEGACY-BRIDGE
+    window.controls = ctx3d.controls; // LEGACY-BRIDGE
+    window.renderer = ctx3d.renderer; // LEGACY-BRIDGE
+    window.tweenCamera = tweenCamera; // LEGACY-BRIDGE
+    window.boardMeshes = ctx3d.boardMeshes; // LEGACY-BRIDGE
+    window.dice1 = ctx3d.dice1; // LEGACY-BRIDGE
+    window.dice2 = ctx3d.dice2; // LEGACY-BRIDGE
 
     // Pre-warm dice physics on idle so the first roll uses real cannon-es
     if (window.DicePhysics) {
@@ -231,7 +233,7 @@ function animateLoop() {
 // is fully opaque so the 3D canvas is never visible until then. This keeps
 // LCP/TBT low during menu, which dominates Lighthouse measurement window.
 let _3dInited = false;
-window.ensure3DInit = function () {
+window.ensure3DInit = function () { // LEGACY-BRIDGE
     if (_3dInited) return;
     _3dInited = true;
     init3D();
@@ -324,3 +326,10 @@ function initMoneyBackground() {
     
     animate();
 }
+
+// LEGACY-BRIDGE: expose top-level function declarations on window (classic-script parity)
+window.init3D = init3D; // LEGACY-BRIDGE
+window._isMenuVisible = _isMenuVisible; // LEGACY-BRIDGE
+window.animateLoop = animateLoop; // LEGACY-BRIDGE
+window._bootMenu = _bootMenu; // LEGACY-BRIDGE
+window.initMoneyBackground = initMoneyBackground; // LEGACY-BRIDGE

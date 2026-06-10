@@ -1,6 +1,0 @@
-/* Minimal pre-Tailwind critical styles — replaces a missing file that 404'd.
-   Deleted in Phase B7 when Tailwind moves to build-time. */
-body {
-  background: #0f172a;
-  color: #f1f5f9;
-}

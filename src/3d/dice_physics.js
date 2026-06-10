@@ -1,7 +1,6 @@
 // --- CANNON-ES PHYSICS-BASED DICE (lazy-loaded) ---
 // Provides DicePhysics.roll(d1, d2, callback). Falls back to pseudo-physics
 // if cannon-es isn't available.
-(function () {
     let world = null;
     let bodies = [];   // CANNON.Body[]
     let meshes = [];   // THREE.Mesh[]
@@ -9,21 +8,16 @@
     let initialized = false;
     let scriptLoaded = false;
 
-    // Use legacy cannon.js (UMD-compatible classic script). cannon-es is ESM-only.
-    const CANNON_CDN = 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js';
+    // cannon-es npm package (ESM) — loaded on demand via dynamic import().
+    let CANNON = null;
 
-    function loadCannon() {
-        if (scriptLoaded) return Promise.resolve(window.CANNON);
-        return new Promise((resolve, reject) => {
-            const s = document.createElement('script');
-            s.src = CANNON_CDN;
-            s.onload = () => {
-                scriptLoaded = true;
-                resolve(window.CANNON);
-            };
-            s.onerror = reject;
-            document.head.appendChild(s);
-        });
+    async function loadCannon() {
+        if (scriptLoaded) return window.CANNON;
+        const mod = await import('cannon-es');
+        CANNON = mod;
+        window.CANNON = mod; // LEGACY-BRIDGE
+        scriptLoaded = true;
+        return window.CANNON;
     }
 
     function initWorld() {
@@ -178,5 +172,7 @@
         return initialized && !!window.CANNON;
     }
 
-    window.DicePhysics = { ensureReady, roll, isReady };
-})();
+    window.DicePhysics = { ensureReady, roll, isReady }; // LEGACY-BRIDGE
+
+// ESM export — same object as the legacy window bridge above.
+export const DicePhysics = window.DicePhysics;

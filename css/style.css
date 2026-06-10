@@ -113,10 +113,6 @@ body {
 
 .mode-card:hover h3 { color: #0f172a; }
 
-.btn-mode-select {
-    @apply glass-panel px-10 py-8 text-slate-800 font-black text-xl flex items-center gap-4 transition-all hover:scale-105 border-2 border-transparent;
-}
-
 .auth-input {
     width: 100%;
     padding: 1.2rem 1.5rem;
