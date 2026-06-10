@@ -208,31 +208,31 @@ interface SeatCellProps {
 function SeatCell({ seat, member, isMe }: SeatCellProps) {
     if (!member) {
         return (
-            <div className="glass-panel !rounded-2xl p-4 flex flex-col items-center justify-center gap-2 min-h-[7rem] border-dashed !border-white/10 opacity-60">
-                <div className="w-3 h-3 rounded-full bg-slate-600" />
-                <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">Đang chờ...</span>
+            <div className="glass-panel !rounded-2xl p-4 flex flex-col items-center justify-center gap-2 min-h-[7rem] border-dashed !border-gold-600/25 opacity-60">
+                <div className="w-3 h-3 rounded-full bg-gold-600/40" />
+                <span className="text-gold-300/55 text-xs font-bold uppercase tracking-widest">Đang chờ...</span>
             </div>
         );
     }
     return (
-        <div className={`glass-panel !rounded-2xl p-4 flex flex-col items-center justify-center gap-2 min-h-[7rem] ${isMe ? '!border-indigo-400/60' : ''}`}>
+        <div className={`glass-panel !rounded-2xl p-4 flex flex-col items-center justify-center gap-2 min-h-[7rem] ${isMe ? '!border-gold-400/70' : ''}`}>
             <div className="flex items-center gap-2">
                 <span
-                    className="w-4 h-4 rounded-full border border-white/40 shadow"
+                    className="w-4 h-4 rounded-full border border-gold-300/40 shadow"
                     style={{ backgroundColor: member.colorHex }}
                 />
-                <span className="text-white font-black text-sm truncate max-w-[8rem]">
+                <span className="text-ivory font-black text-sm truncate max-w-[8rem]">
                     {member.name}{isMe ? ' (bạn)' : ''}
                 </span>
                 <span
                     title={member.online ? 'Đang trực tuyến' : 'Mất kết nối'}
-                    className={`w-2 h-2 rounded-full ${member.online ? 'bg-emerald-400' : 'bg-slate-500'}`}
+                    className={`w-2 h-2 rounded-full ${member.online ? 'bg-jade-400' : 'bg-gold-600/40'}`}
                 />
             </div>
-            <span className={`text-[10px] font-black uppercase tracking-widest ${member.isReady ? 'text-emerald-400' : 'text-amber-400'}`}>
+            <span className={`text-[10px] font-black uppercase tracking-widest ${member.isReady ? 'text-jade-400' : 'text-gold-400'}`}>
                 {member.isReady ? '✓ Sẵn sàng' : 'Chưa sẵn sàng'}
             </span>
-            <span className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">Ghế {seat + 1}</span>
+            <span className="text-gold-300/45 text-[9px] font-bold uppercase tracking-widest">Ghế {seat + 1}</span>
         </div>
     );
 }
@@ -240,7 +240,7 @@ function SeatCell({ seat, member, isMe }: SeatCellProps) {
 function ErrorLine({ text }: { text: string | null }) {
     if (!text) return null;
     return (
-        <p className="text-rose-400 text-xs font-bold text-center break-words" role="alert">
+        <p className="text-terracotta text-xs font-bold text-center break-words" role="alert">
             ⚠️ {text}
         </p>
     );
@@ -274,8 +274,8 @@ export default function MenuScreens() {
         if (!hasSupabase) return; // leave the card inert ("SẮP RA MẮT")
 
         card.classList.remove(...INERT_TRIGGER_CLASSES);
-        card.classList.add('cursor-pointer', 'hover:border-rose-400');
-        const badge = card.querySelector('div.bg-rose-600');
+        card.classList.add('cursor-pointer', 'hover:border-gold-400');
+        const badge = card.querySelector('div.bg-son-600');
         if (badge) badge.textContent = 'MỚI';
         const subtitle = card.querySelector('p');
         if (subtitle) subtitle.textContent = 'Chơi cùng bạn bè qua mạng';
@@ -376,19 +376,19 @@ export default function MenuScreens() {
     if (!overlayOpen || phase === 'in_game') return null;
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-lac-900/80 backdrop-blur-sm p-4">
             <div
                 role="dialog"
                 aria-modal="true"
                 aria-label="Chơi Online"
-                className="glass-panel relative w-full max-w-xl p-8 md:p-10 flex flex-col gap-6 text-white max-h-[90vh] overflow-y-auto"
+                className="glass-panel deco-frame relative w-full max-w-xl p-8 md:p-10 flex flex-col gap-6 text-ivory max-h-[90vh] overflow-y-auto"
             >
                 {closable && (
                     <button
                         type="button"
                         onClick={() => { window.SoundFX?.click(); setOverlayOpen(false); }}
                         aria-label="Đóng"
-                        className="absolute top-4 right-5 text-slate-400 hover:text-white text-xl font-black transition-colors"
+                        className="absolute top-4 right-5 text-gold-300/60 hover:text-gold-300 text-xl font-black transition-colors"
                     >
                         ✕
                     </button>
@@ -454,22 +454,22 @@ function IdleScreen({
 }: IdleScreenProps) {
     return (
         <>
-            <h2 className="text-3xl font-black uppercase italic tracking-widest text-center">🌐 Chơi Online</h2>
+            <h2 className="font-display text-4xl font-black tracking-[0.01em] text-gold-300 text-center">🌐 Chơi Online</h2>
 
             <label className="flex flex-col gap-2">
-                <span className="text-slate-400 text-xs font-black uppercase tracking-widest">Tên hiển thị</span>
+                <span className="text-gold-300/65 text-xs font-black uppercase tracking-widest">Tên hiển thị</span>
                 <input
                     type="text"
                     value={name}
                     maxLength={MAX_NAME_LENGTH}
                     onChange={(e) => setName(e.target.value)}
-                    className="bg-white/5 border border-white/15 rounded-2xl px-5 py-3 text-white font-bold outline-none focus:border-indigo-400 transition-colors"
+                    className="auth-input"
                     placeholder={DEFAULT_NAME}
                 />
             </label>
 
             <div className="flex flex-col gap-2">
-                <span className="text-slate-400 text-xs font-black uppercase tracking-widest">Màu quân cờ</span>
+                <span className="text-gold-300/65 text-xs font-black uppercase tracking-widest">Màu quân cờ</span>
                 <div className="flex gap-4 justify-center">
                     {PLAYER_SWATCHES.map((hex) => (
                         <button
@@ -480,8 +480,8 @@ function IdleScreen({
                             onClick={() => { window.SoundFX?.click(); setColorHex(hex); }}
                             className={`w-12 h-12 rounded-full border-4 transition-all ${
                                 colorHex === hex
-                                    ? 'border-white scale-110 shadow-[0_0_20px_rgba(255,255,255,0.4)]'
-                                    : 'border-white/20 hover:scale-105'
+                                    ? 'border-gold-300 scale-110 shadow-[0_0_20px_rgba(232,193,107,0.5)]'
+                                    : 'border-gold-600/30 hover:scale-105'
                             }`}
                             style={{ backgroundColor: hex }}
                         />
@@ -493,15 +493,13 @@ function IdleScreen({
                 type="button"
                 onClick={onCreate}
                 disabled={busy}
-                className="btn-action bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-action btn-son disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {busy ? '⏳ Đang xử lý...' : 'TẠO PHÒNG'}
             </button>
 
-            <div className="flex items-center gap-4 text-slate-500 text-xs font-black uppercase tracking-widest">
-                <div className="flex-1 h-px bg-white/10" />
+            <div className="deco-divider text-xs font-black uppercase tracking-widest">
                 hoặc
-                <div className="flex-1 h-px bg-white/10" />
             </div>
 
             <div className="flex gap-3">
@@ -510,7 +508,7 @@ function IdleScreen({
                     value={joinCode}
                     maxLength={ROOM_CODE_LENGTH}
                     onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                    className="flex-1 bg-white/5 border border-white/15 rounded-2xl px-5 py-3 text-white font-black text-center text-xl tracking-[0.4em] uppercase outline-none focus:border-emerald-400 transition-colors"
+                    className="auth-input flex-1 text-center text-xl tracking-[0.4em] uppercase font-black"
                     placeholder="MÃ PHÒNG"
                     aria-label="Mã phòng 6 ký tự"
                 />
@@ -550,22 +548,22 @@ function LobbyScreen({
 }: LobbyScreenProps) {
     return (
         <>
-            <h2 className="text-2xl font-black uppercase italic tracking-widest text-center">Phòng chờ</h2>
+            <h2 className="font-display text-3xl font-black tracking-[0.01em] text-gold-300 text-center">Phòng chờ</h2>
 
             <div className="flex items-center justify-center gap-3">
-                <span className="text-5xl font-black tracking-[0.3em] text-amber-300 select-all">
+                <span className="font-display text-5xl font-black tracking-[0.3em] text-gold-300 select-all">
                     {code ?? '------'}
                 </span>
                 <button
                     type="button"
                     onClick={onCopy}
                     aria-label="Sao chép mã phòng"
-                    className="glass-panel !rounded-xl px-3 py-2 text-lg hover:!border-amber-300/60 transition-colors"
+                    className="glass-panel !rounded-xl px-3 py-2 text-lg hover:!border-gold-400/70 transition-colors"
                 >
                     {copied ? '✓' : '📋'}
                 </button>
             </div>
-            <p className="text-slate-400 text-xs font-bold text-center uppercase tracking-widest -mt-3">
+            <p className="text-gold-300/55 text-xs font-bold text-center uppercase tracking-widest -mt-3">
                 Gửi mã này cho bạn bè để vào phòng
             </p>
 
@@ -588,7 +586,7 @@ function LobbyScreen({
                     type="button"
                     onClick={onReadyToggle}
                     disabled={busy || !myMember}
-                    className={`btn-action ${myMember?.isReady ? 'bg-slate-600' : 'bg-emerald-600'} disabled:opacity-50`}
+                    className={`btn-action ${myMember?.isReady ? 'btn-taupe' : 'bg-emerald-600'} disabled:opacity-50`}
                 >
                     {myMember?.isReady ? 'HỦY SẴN SÀNG' : 'SẴN SÀNG'}
                 </button>
@@ -597,11 +595,11 @@ function LobbyScreen({
                     type="button"
                     onClick={onStart}
                     disabled={busy || !allReady}
-                    className="btn-action bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="btn-action btn-son disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                     BẮT ĐẦU
                 </button>
-                <p className="text-slate-500 text-[10px] font-bold text-center uppercase tracking-widest -mt-1">
+                <p className="text-gold-300/50 text-[10px] font-bold text-center uppercase tracking-widest -mt-1">
                     Cần ≥ 2 người và tất cả sẵn sàng · chỉ chủ phòng bắt đầu được
                 </p>
 
@@ -609,7 +607,7 @@ function LobbyScreen({
                     type="button"
                     onClick={onLeave}
                     disabled={busy}
-                    className="text-rose-400 hover:text-rose-300 font-black uppercase text-xs tracking-widest transition-colors disabled:opacity-50"
+                    className="text-terracotta hover:text-gold-400 font-black uppercase text-xs tracking-widest transition-colors disabled:opacity-50"
                 >
                     ← Rời phòng
                 </button>
@@ -624,8 +622,8 @@ function LobbyScreen({
 function StartingScreen() {
     return (
         <div className="flex flex-col items-center gap-4 py-8">
-            <div className="w-10 h-10 border-4 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-            <p className="text-white font-black uppercase tracking-widest text-sm">Đang bắt đầu ván chơi...</p>
+            <div className="w-10 h-10 border-4 border-gold-400 border-t-transparent rounded-full animate-spin" />
+            <p className="text-ivory font-black uppercase tracking-widest text-sm">Đang bắt đầu ván chơi...</p>
         </div>
     );
 }

@@ -1,8 +1,45 @@
-/* --- CORE DESIGN SYSTEM --- */
+/* ============================================================
+   SƠN MÀI — INDOCHINE LACQUER DECO DESIGN SYSTEM
+   (see gan-harness/direction.md)
+   ============================================================ */
 :root {
-    --glass-bg: rgba(255, 255, 255, 0.45);
-    --glass-border: rgba(255, 255, 255, 0.3);
-    --glass-shadow: rgba(0, 0, 0, 0.1);
+    /* Lacquer grounds */
+    --lac-900: #0B0A0C;
+    --lac-800: #1A0E10;
+    --lac-700: #241114;
+    /* Sơn mài red */
+    --son-700: #6E1414;
+    --son-600: #8A1A1A;
+    --son-500: #A52525;
+    /* Gold leaf */
+    --gold-300: #F4D99A;
+    --gold-400: #E8C16B;
+    --gold-500: #D4A94E;
+    --gold-600: #B8893C;
+    /* Accents */
+    --jade-500: #2E7D6B;
+    --jade-400: #3E9A85;
+    --ivory: #F4ECD8;
+    --terracotta: #C2410C;
+
+    /* Panel system */
+    --panel-grad: linear-gradient(160deg, #241114 0%, #170B0D 55%, #120809 100%);
+    --panel-hairline: rgba(232, 193, 107, 0.34);
+    --panel-sheen: rgba(232, 193, 107, 0.10);
+    --shadow-lac: 0 24px 60px -18px rgba(0, 0, 0, 0.78);
+    --shadow-lac-lg: 0 40px 90px -24px rgba(0, 0, 0, 0.82);
+
+    /* Motion */
+    --ease-lac: cubic-bezier(.2, .8, .2, 1);
+    --ease-gold: cubic-bezier(.34, 1.4, .5, 1);
+    --d-fast: 160ms;
+    --d-norm: 320ms;
+    --d-slow: 560ms;
+
+    /* legacy aliases (kept for any stray reference) */
+    --glass-bg: var(--panel-grad);
+    --glass-border: var(--panel-hairline);
+    --glass-shadow: rgba(0, 0, 0, 0.6);
 }
 
 * {
@@ -11,135 +48,330 @@
 }
 
 body {
-    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+    background:
+        radial-gradient(1200px 800px at 50% -10%, rgba(110, 20, 20, 0.45) 0%, transparent 60%),
+        radial-gradient(circle at center, #15090B 0%, var(--lac-900) 78%);
+    color: var(--ivory);
     font-family: 'Be Vietnam Pro', sans-serif;
 }
 
-/* --- PREMIUM MENU STYLES --- */
-#main-menu {
-    background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%);
-    perspective: 1000px;
+/* --- PREMIUM MENU GROUND --- */
+#main-menu,
+#main-menu-layer {
+    background:
+        radial-gradient(900px 700px at 50% 35%, rgba(110, 20, 20, 0.38) 0%, transparent 62%),
+        radial-gradient(circle at center, #160A0C 0%, #08070A 80%) !important;
+    perspective: 1200px;
 }
 
+/* --- LACQUER PANEL (replaces .glass-panel everywhere) --- */
 .glass-panel {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(15px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 2rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    position: relative;
+    background: var(--panel-grad);
+    border: 1px solid var(--panel-hairline);
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-lac), inset 0 1px 0 var(--panel-sheen);
+    color: var(--ivory);
+}
+/* top gold sheen line */
+.glass-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding-top: 1px;
+    background: linear-gradient(180deg, rgba(244, 217, 154, 0.22), transparent 42%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+}
+
+/* --- IVORY PAPER PANEL (deed-card surfaces: action modal, settings, rules) --- */
+.glass-panel.paper {
+    background:
+        linear-gradient(180deg, #FBF5E6 0%, var(--ivory) 100%);
+    border: 1px solid var(--gold-500);
+    box-shadow: var(--shadow-lac-lg), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: var(--lac-900);
+}
+.glass-panel.paper::before {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), transparent 38%);
+}
+/* aged-paper grain + a thin sơn-mài top rule */
+.glass-panel.paper::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    border-radius: 1.25rem 1.25rem 0 0;
+    background: linear-gradient(90deg, var(--gold-400), var(--son-600), var(--gold-400));
+    pointer-events: none;
+}
+
+/* --- DECO HAIRLINE FRAME (khắc vàng inlay) --- */
+.deco-frame {
+    position: relative;
+    box-shadow: inset 0 0 0 1px var(--gold-600), inset 0 0 0 6px transparent, inset 0 0 0 7px rgba(232, 193, 107, 0.25);
+}
+.deco-frame::after {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border: 1px solid rgba(232, 193, 107, 0.45);
+    border-radius: inherit;
+    pointer-events: none;
 }
 
 /* --- BUTTONS --- */
+/* Primary CTA — gilded lacquer with gold-foil sweep on hover */
 .btn-primary {
-    background: white;
-    color: #0f172a;
-    font-weight: 900;
-    border-radius: 9999px;
-    box-shadow: 0 10px 40px rgba(255, 255, 255, 0.2);
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     position: relative;
     overflow: hidden;
+    background: linear-gradient(180deg, var(--son-600) 0%, var(--son-700) 100%);
+    color: var(--gold-300);
+    font-weight: 900;
+    border-radius: 9999px;
+    border: 1px solid var(--gold-500);
+    box-shadow: 0 14px 40px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(244, 217, 154, 0.35);
+    transition: transform var(--d-norm) var(--ease-gold), box-shadow var(--d-norm) var(--ease-lac);
 }
-
+.btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 35%, rgba(244, 217, 154, 0.55) 50%, transparent 65%);
+    transform: translateX(-130%);
+    transition: transform var(--d-slow) var(--ease-lac);
+    pointer-events: none;
+}
 .btn-primary:hover {
-    transform: scale(1.08) translateY(-4px);
-    box-shadow: 0 15px 50px rgba(255, 255, 255, 0.3);
-    background: #f8fafc;
+    transform: translateY(-3px);
+    box-shadow: 0 22px 56px -14px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(244, 217, 154, 0.5), 0 0 0 1px var(--gold-400);
 }
-
-.btn-primary:active {
-    transform: scale(0.95);
-}
+.btn-primary:hover::after { transform: translateX(130%); }
+.btn-primary:active { transform: translateY(0) scale(0.97); }
 
 .btn-action {
-    color: white;
+    position: relative;
+    color: var(--gold-300);
     font-weight: 900;
-    padding: 1.2rem 2.5rem;
-    border-radius: 1.5rem;
+    padding: 1rem 2.25rem;
+    border-radius: 0.85rem;
     text-transform: uppercase;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    transition: all 0.2s ease;
+    letter-spacing: 0.14em;
+    border: 1px solid var(--gold-600);
+    background: linear-gradient(180deg, var(--son-600), var(--son-700));
+    box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(244, 217, 154, 0.28);
+    transition: transform var(--d-fast) var(--ease-gold), box-shadow var(--d-fast) var(--ease-lac), filter var(--d-fast) ease;
 }
-
 .btn-action:hover {
     transform: translateY(-2px);
-    filter: brightness(1.1);
+    filter: saturate(1.15) brightness(1.06);
+    box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(244, 217, 154, 0.42), 0 0 0 1px var(--gold-400);
 }
+.btn-action:active { transform: translateY(0) scale(0.97); }
+/* Semantic tints override the tailwind bg-* on action buttons */
+.btn-action.bg-emerald-600,
+.btn-action.bg-emerald-500 {
+    background: linear-gradient(180deg, var(--jade-400), var(--jade-500));
+    border-color: var(--jade-500); color: var(--ivory);
+}
+.btn-action.bg-slate-500,
+.btn-action.bg-slate-600,
+.btn-action.bg-slate-700 {
+    background: linear-gradient(180deg, #2A1A1C, #1C1012);
+    border-color: var(--gold-600); color: var(--gold-300);
+}
+.btn-action.bg-orange-500 {
+    background: linear-gradient(180deg, #C2410C, #8A2A06);
+    border-color: var(--gold-600); color: var(--gold-300);
+}
+.btn-action.bg-purple-600 {
+    background: linear-gradient(180deg, #3A1530, #25101F);
+    border-color: var(--gold-600); color: var(--gold-300);
+}
+.btn-action.bg-indigo-600 {
+    background: linear-gradient(180deg, var(--son-600), var(--son-700));
+    border-color: var(--gold-600); color: var(--gold-300);
+}
+
+/* --- SEMANTIC ACTION-BUTTON SKINS (ActionModal per-kind map) --- */
+/* Primary action — sơn-mài red, gold leaf border + text (roll / buy). */
+.btn-action.btn-son {
+    background: linear-gradient(180deg, var(--son-600), var(--son-700));
+    border-color: var(--gold-400); color: var(--gold-300);
+}
+/* Spend/build — terracotta lacquer, distinct warm-orange from the red. */
+.btn-action.btn-terracotta {
+    background: linear-gradient(180deg, var(--terracotta), #8A2A06);
+    border-color: var(--gold-600); color: var(--gold-300);
+}
+/* Secondary / dismiss — warm taupe lacquer (skip). Recedes, still gilded. */
+.btn-action.btn-taupe {
+    background: linear-gradient(180deg, #3A2A28, #241715);
+    border-color: var(--gold-600); color: var(--gold-300);
+}
+/* Turn-close — gold leaf on deep lacquer (end turn). The "next beat" accent. */
+.btn-action.btn-gold {
+    background: linear-gradient(180deg, var(--gold-400), var(--gold-600));
+    border-color: var(--gold-300); color: var(--lac-900);
+}
+.btn-action.btn-gold:hover { filter: saturate(1.05) brightness(1.05); }
 
 .btn-back {
     font-weight: 800;
-    color: #94a3b8;
-    transition: all 0.3s ease;
+    color: var(--gold-600);
+    letter-spacing: 0.2em;
+    transition: color var(--d-norm) var(--ease-lac), letter-spacing var(--d-norm) var(--ease-lac);
 }
+.btn-back:hover { color: var(--gold-300); letter-spacing: 0.28em; }
 
-.btn-back:hover {
-    color: white;
-    letter-spacing: 0.1em;
+/* HUD chrome buttons — lacquer chips that gild on hover (designed state) */
+.hud-btn {
+    color: var(--gold-300);
+    transition: transform var(--d-fast) var(--ease-gold),
+                border-color var(--d-fast) var(--ease-lac),
+                box-shadow var(--d-fast) var(--ease-lac),
+                color var(--d-fast) ease;
+}
+.hud-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--gold-400) !important;
+    color: var(--gold-300);
+    box-shadow: var(--shadow-lac), 0 0 0 1px var(--gold-500), inset 0 1px 0 rgba(244, 217, 154, 0.35);
+}
+.hud-btn:active { transform: translateY(0) scale(0.97); }
+
+/* Log header icon buttons (replay / export) */
+.log-icon-btn {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 0.45rem;
+    background: rgba(232, 193, 107, 0.10);
+    border: 1px solid transparent;
+    transition: background var(--d-fast) ease, border-color var(--d-fast) ease, transform var(--d-fast) var(--ease-gold);
+}
+.log-icon-btn:hover {
+    background: rgba(232, 193, 107, 0.20);
+    border-color: var(--gold-500);
+    transform: translateY(-1px);
 }
 
 .tab-btn {
     padding: 0.75rem 2rem;
     font-weight: 900;
     border-radius: 9999px;
-    transition: all 0.3s ease;
+    transition: all var(--d-norm) var(--ease-lac);
 }
-
 .tab-btn.active {
-    background: white;
-    color: #0f172a;
-    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
+    background: linear-gradient(180deg, var(--gold-400), var(--gold-600));
+    color: var(--lac-900);
+    box-shadow: 0 4px 20px rgba(232, 193, 107, 0.25);
 }
-
 .tab-btn:not(.active) {
-    color: white;
-    background: rgba(255, 255, 255, 0.1);
+    color: var(--gold-300);
+    background: rgba(232, 193, 107, 0.08);
 }
 
 /* --- CARDS & UI --- */
 .mode-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 3rem;
+    background: var(--panel-grad);
+    border: 1px solid var(--panel-hairline);
+    border-radius: 1.25rem;
     padding: 3rem;
     width: 280px;
     cursor: pointer;
-    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    transition: transform var(--d-slow) var(--ease-lac), box-shadow var(--d-slow) var(--ease-lac), border-color var(--d-slow) var(--ease-lac);
 }
-
 .mode-card:hover {
-    background: white;
     transform: translateY(-10px);
+    border-color: var(--gold-400);
+    box-shadow: var(--shadow-lac-lg), 0 0 0 1px var(--gold-500);
 }
-
-.mode-card:hover h3 { color: #0f172a; }
 
 .auth-input {
     width: 100%;
-    padding: 1.2rem 1.5rem;
-    border-radius: 1.25rem;
-    background: rgba(255, 255, 255, 0.5);
-    border: 1px solid #cbd5e1;
+    padding: 1.1rem 1.4rem;
+    border-radius: 0.85rem;
+    background: rgba(244, 236, 216, 0.06);
+    border: 1px solid var(--gold-600);
     font-weight: 700;
-    color: #1e293b;
+    color: var(--ivory);
     outline: none;
-    transition: all 0.2s ease;
+    transition: border-color var(--d-fast) var(--ease-lac), box-shadow var(--d-fast) var(--ease-lac), background var(--d-fast) ease;
+}
+.auth-input::placeholder { color: rgba(244, 236, 216, 0.4); }
+.auth-input:focus {
+    border-color: var(--gold-400);
+    background: rgba(244, 236, 216, 0.10);
+    box-shadow: 0 0 0 3px rgba(232, 193, 107, 0.18);
 }
 
-.auth-input:focus {
-    border-color: #3b82f6;
-    background: white;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+/* --- TRỐNG ĐỒNG (Đông Sơn drum) WATERMARK + DECO DIVIDER --- */
+/* Signature menu backdrop: a slow-spinning gold Đông Sơn ring behind the logo.
+   z-0 keeps it under the menu content (z-10); a radial mask fades the rim so it
+   reads as atmosphere, not a hard graphic. */
+.drum-watermark {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    overflow: hidden;
+    -webkit-mask-image: radial-gradient(closest-side at 50% 42%, #000 35%, transparent 78%);
+            mask-image: radial-gradient(closest-side at 50% 42%, #000 35%, transparent 78%);
+}
+.drum-watermark svg {
+    width: min(118vh, 118vw);
+    height: min(118vh, 118vw);
+    color: var(--gold-400);
+    opacity: 0.16;
+    animation: drum-spin 90s linear infinite;
+    filter: drop-shadow(0 0 24px rgba(232, 193, 107, 0.25));
+}
+body.reduced-motion .drum-watermark svg { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+    .drum-watermark svg { animation: none !important; }
+}
+.deco-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    color: var(--gold-500);
+}
+.deco-divider::before,
+.deco-divider::after {
+    content: '';
+    height: 1px;
+    width: clamp(2rem, 14vw, 9rem);
+    background: linear-gradient(90deg, transparent, var(--gold-600));
+}
+.deco-divider::after { background: linear-gradient(270deg, transparent, var(--gold-600)); }
+.deco-divider .drum-dot {
+    width: 26px; height: 26px; flex: none; color: var(--gold-400);
+}
+
+@keyframes drum-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* --- ANIMATIONS --- */
 @keyframes float {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-20px); }
+    50% { transform: translateY(-16px); }
 }
+.animate-float { animation: float 7s ease-in-out infinite; }
 
-.animate-float {
-    animation: float 6s ease-in-out infinite;
+@keyframes lac-rise {
+    0% { opacity: 0; transform: translateY(18px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
+.animate-lac-rise { animation: lac-rise var(--d-slow) var(--ease-lac) both; }
 
 .menu-view {
     transition: all 0.5s ease;
@@ -169,18 +401,60 @@ body {
     background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(232, 193, 107, 0.28);
     border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(232, 193, 107, 0.5);
 }
 
 /* View Titles */
 .view-title {
+    font-family: 'Playfair Display', serif;
     font-weight: 900;
     font-size: 3.5rem;
-    color: white;
+    color: var(--gold-300);
     margin-bottom: 3rem;
-    text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    text-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
+
+/* ============================================================
+   IN-LACQUER-PANEL TEXT NORMALIZATION
+   The surfaces were written for a LIGHT glass panel (slate-900
+   text on white). On lacquer (dark) those go invisible — remap
+   the slate/indigo utilities to ivory/gold ONLY inside panels.
+   Ivory-bodied surfaces (modals/cards/trade) opt OUT via .paper.
+   ============================================================ */
+.glass-panel:not(.paper) .text-slate-900,
+.glass-panel:not(.paper) .text-slate-800 { color: var(--ivory) !important; }
+.glass-panel:not(.paper) .text-slate-700,
+.glass-panel:not(.paper) .text-slate-600 { color: rgba(244, 236, 216, 0.82) !important; }
+.glass-panel:not(.paper) .text-slate-500,
+.glass-panel:not(.paper) .text-slate-400 { color: rgba(232, 193, 107, 0.62) !important; }
+.glass-panel:not(.paper) .text-indigo-700,
+.glass-panel:not(.paper) .text-indigo-600,
+.glass-panel:not(.paper) .text-indigo-500 { color: var(--gold-300) !important; }
+.glass-panel:not(.paper) .text-emerald-600,
+.glass-panel:not(.paper) .text-emerald-500 { color: var(--jade-400) !important; }
+.glass-panel:not(.paper) .text-red-600,
+.glass-panel:not(.paper) .text-red-500,
+.glass-panel:not(.paper) .text-rose-400 { color: var(--terracotta) !important; }
+.glass-panel:not(.paper) .text-amber-400,
+.glass-panel:not(.paper) .text-amber-300 { color: var(--gold-400) !important; }
+/* black-tinted chips/buttons inside panels -> gold-tinted */
+.glass-panel:not(.paper) .bg-black\/10,
+.glass-panel:not(.paper) .bg-white\/5 { background: rgba(232, 193, 107, 0.10) !important; }
+/* current-player highlight (was white wash) -> warm gold wash */
+.glass-panel.bg-white\/60 { background: linear-gradient(160deg, #341619, #21100F) !important; }
+.glass-panel .ring-white\/50 { --tw-ring-color: rgba(232, 193, 107, 0.6) !important; }
+/* stats sub-panel inside player cards */
+.glass-panel .stats-panel {
+    background: rgba(232, 193, 107, 0.07) !important;
+    border-color: rgba(232, 193, 107, 0.18) !important;
+    color: var(--ivory) !important;
+}
+.glass-panel .stats-panel .stat span { color: rgba(232, 193, 107, 0.6) !important; }
+.glass-panel .stats-panel .stat strong { color: var(--gold-300) !important; }
 
 /* ============================================================
    PLAYER LIST — DESKTOP (default) vs MOBILE (bottom sheet)
@@ -206,13 +480,13 @@ body {
         left: 0;
         bottom: 0;
         max-height: 70vh;
-        background: rgba(15, 23, 42, 0.92);
-        backdrop-filter: blur(16px) saturate(180%);
-        border-top: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 1.5rem 1.5rem 0 0;
+        background: linear-gradient(180deg, #241114, #120809);
+        border-top: 1px solid var(--panel-hairline);
+        border-radius: 1.25rem 1.25rem 0 0;
+        box-shadow: 0 -20px 50px -20px rgba(0,0,0,0.8);
         padding: 0.25rem 1rem 1rem;
         transform: translateY(calc(100% - 3rem));
-        transition: transform 0.35s cubic-bezier(.22,1,.36,1);
+        transition: transform var(--d-norm) var(--ease-lac);
     }
     .players-shell.is-open {
         transform: translateY(0);
@@ -224,7 +498,7 @@ body {
         gap: 0.25rem;
         background: transparent;
         border: 0;
-        color: rgba(255,255,255,0.85);
+        color: var(--gold-300);
         padding: 0.5rem 0;
         cursor: pointer;
     }
@@ -232,7 +506,7 @@ body {
         width: 48px;
         height: 4px;
         border-radius: 999px;
-        background: rgba(255,255,255,0.45);
+        background: var(--gold-500);
     }
     .players-toggle-label {
         font-size: 0.65rem;
@@ -322,31 +596,31 @@ body {
 }
 .toast {
     pointer-events: auto;
-    background: rgba(15, 23, 42, 0.92);
-    color: #f8fafc;
-    border-radius: 0.9rem;
+    background: linear-gradient(160deg, #241114, #150A0C);
+    color: var(--ivory);
+    border-radius: 0.7rem;
     padding: 0.7rem 1rem;
     display: flex;
     align-items: center;
     gap: 0.65rem;
     font-weight: 700;
     font-size: 0.85rem;
-    box-shadow: 0 18px 40px -10px rgba(0,0,0,0.6);
-    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: var(--shadow-lac), inset 0 1px 0 var(--panel-sheen);
+    border: 1px solid var(--panel-hairline);
     transform: translateX(120%);
     opacity: 0;
-    transition: transform 0.32s cubic-bezier(.22,1,.36,1), opacity 0.32s;
+    transition: transform var(--d-norm) var(--ease-lac), opacity var(--d-norm);
     cursor: pointer;
 }
 .toast-in  { transform: translateX(0); opacity: 1; }
 .toast-out { transform: translateX(20%); opacity: 0; }
 .toast-icon { font-size: 1.1rem; flex-shrink: 0; }
 .toast-msg { line-height: 1.3; }
-.toast-success { border-left: 4px solid #22c55e; }
-.toast-warn    { border-left: 4px solid #facc15; }
-.toast-error   { border-left: 4px solid #ef4444; }
-.toast-info    { border-left: 4px solid #6366f1; }
-.toast-money   { border-left: 4px solid #fbbf24; }
+.toast-success { border-left: 4px solid var(--jade-500); }
+.toast-warn    { border-left: 4px solid var(--gold-400); }
+.toast-error   { border-left: 4px solid var(--terracotta); }
+.toast-info    { border-left: 4px solid var(--gold-500); }
+.toast-money   { border-left: 4px solid var(--gold-400); }
 
 @media (max-width: 767px) {
     .toast-root {
@@ -407,7 +681,7 @@ body.color-blind #tile-color { position: relative; }
 
 /* Focus outline for keyboard users */
 :focus-visible {
-    outline: 3px solid #6366f1;
+    outline: 3px solid var(--gold-400);
     outline-offset: 3px;
     border-radius: 0.5rem;
 }
@@ -435,15 +709,15 @@ body.color-blind #tile-color { position: relative; }
 .property-card-overlay.hidden { display: none; }
 
 .property-card {
-    --pc-color: #6366f1;
+    --pc-color: #6E1414;
     width: min(420px, 92vw);
     max-height: 86vh;
     overflow: hidden;
-    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
-    color: #0f172a;
-    border-radius: 1.5rem;
-    border: 1px solid rgba(0,0,0,0.08);
-    box-shadow: 0 35px 70px -15px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+    background: linear-gradient(180deg, #FBF5E6 0%, var(--ivory) 100%);
+    color: var(--lac-900);
+    border-radius: 1.25rem;
+    border: 1px solid var(--gold-500);
+    box-shadow: var(--shadow-lac-lg), 0 0 0 1px rgba(232,193,107,0.2);
     transform: rotateX(28deg) translateY(40px) scale(0.92);
     opacity: 0;
     transition: transform 0.42s cubic-bezier(.22,1,.36,1), opacity 0.32s;
@@ -577,7 +851,7 @@ body.reduced-motion .property-card { transition: none !important; transform: non
     content: '';
     position: absolute; inset: -6px;
     border-radius: 1.5rem;
-    box-shadow: 0 0 0 0 rgba(99,102,241,0.6);
+    box-shadow: 0 0 0 0 rgba(232,193,107,0.65);
     animation: suggest-ring 1.4s ease-out infinite;
     pointer-events: none;
 }
@@ -586,8 +860,8 @@ body.reduced-motion .property-card { transition: none !important; transform: non
     50%      { transform: translateX(-50%) translateY(-10px); }
 }
 @keyframes suggest-ring {
-    0%   { box-shadow: 0 0 0 0 rgba(99,102,241,0.55); }
-    100% { box-shadow: 0 0 0 22px rgba(99,102,241,0); }
+    0%   { box-shadow: 0 0 0 0 rgba(232,193,107,0.55); }
+    100% { box-shadow: 0 0 0 22px rgba(232,193,107,0); }
 }
 body.reduced-motion .suggest-pulse::before,
 body.reduced-motion .suggest-pulse::after { animation: none !important; }
@@ -605,18 +879,21 @@ body.reduced-motion .suggest-pulse::after { animation: none !important; }
 .tutorial-overlay.hidden { display: none; }
 .tutorial-card {
     width: min(520px, 100%);
-    background: #ffffff; color: #0f172a;
-    border-radius: 1.5rem; padding: 2rem;
-    box-shadow: 0 30px 60px -10px rgba(0,0,0,0.5);
+    background: linear-gradient(180deg, #FBF5E6 0%, var(--ivory) 100%); color: var(--lac-900);
+    border-radius: 1.25rem; padding: 2rem;
+    border: 1px solid var(--gold-500);
+    box-shadow: var(--shadow-lac-lg);
     display: flex; flex-direction: column; gap: 1rem;
 }
+.tutorial-title { font-family: 'Playfair Display', serif; color: var(--son-700); }
 .tutorial-progress {
     display: flex; gap: 0.35rem;
 }
 .tutorial-progress span {
     flex: 1; height: 4px; border-radius: 999px; background: #e2e8f0;
 }
-.tutorial-progress span.is-active { background: #6366f1; }
+.tutorial-progress span { background: rgba(110,20,20,0.18); }
+.tutorial-progress span.is-active { background: linear-gradient(90deg, var(--gold-400), var(--son-600)); }
 .tutorial-title {
     font-size: 1.6rem; font-weight: 900;
     text-transform: uppercase; letter-spacing: 0.05em;
@@ -628,9 +905,9 @@ body.reduced-motion .suggest-pulse::after { animation: none !important; }
     font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;
     border-radius: 0.75rem; border: 0; cursor: pointer;
 }
-.tutorial-btn-primary { background: #6366f1; color: #fff; }
-.tutorial-btn-primary:hover { background: #4f46e5; }
-.tutorial-btn-secondary { background: rgba(15,23,42,0.08); color: #1e293b; }
+.tutorial-btn-primary { background: linear-gradient(180deg, var(--son-600), var(--son-700)); color: var(--gold-300); border: 1px solid var(--gold-500); }
+.tutorial-btn-primary:hover { filter: brightness(1.08); }
+.tutorial-btn-secondary { background: rgba(110,20,20,0.10); color: var(--son-700); }
 
 /* PERFORMANCE HUD */
 .perf-hud {
@@ -684,12 +961,19 @@ body.reduced-motion.modal-open #canvas-container {
     display: flex; flex-direction: column;
     overflow: hidden;
 }
+.trade-modal {
+    border: 1px solid var(--gold-500) !important;
+    box-shadow: var(--shadow-lac-lg) !important;
+}
+.trade-body { background: var(--ivory); }
 .trade-header {
     padding: 1.25rem 1.5rem;
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
-    color: #fff;
+    background: linear-gradient(135deg, var(--son-600), var(--son-700));
+    border-bottom: 1px solid var(--gold-500);
+    color: var(--gold-300);
     display: flex; align-items: center; justify-content: space-between;
 }
+.trade-header h2 { font-family: 'Playfair Display', serif; }
 .trade-header h2 { font-weight: 900; font-size: 1.4rem; }
 .trade-close {
     background: rgba(0,0,0,0.25); color: #fff;
@@ -713,7 +997,7 @@ body.reduced-motion.modal-open #canvas-container {
 .trade-col h3 {
     font-size: 0.85rem; font-weight: 900;
     text-transform: uppercase; letter-spacing: 0.1em;
-    color: #4f46e5; margin-bottom: 0.75rem;
+    color: var(--son-600); margin-bottom: 0.75rem;
 }
 .trade-money {
     display: block; font-weight: 800; font-size: 0.85rem;
@@ -738,7 +1022,7 @@ body.reduced-motion.modal-open #canvas-container {
 }
 .trade-prop span { flex: 1; }
 .trade-prop em { font-style: normal; color: #64748b; font-size: 0.7rem; }
-.trade-prop input { accent-color: #4f46e5; }
+.trade-prop input { accent-color: var(--son-600); }
 .trade-empty { font-size: 0.75rem; color: #94a3b8; font-style: italic; padding: 0.5rem; }
 .trade-footer {
     padding: 1rem 1.5rem;
@@ -751,9 +1035,9 @@ body.reduced-motion.modal-open #canvas-container {
     font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;
     border-radius: 0.75rem; border: 0; cursor: pointer;
 }
-.trade-btn-primary { background: #4f46e5; color: #fff; }
-.trade-btn-primary:hover { background: #4338ca; }
-.trade-btn-secondary { background: rgba(15,23,42,0.08); color: #1e293b; }
+.trade-btn-primary { background: linear-gradient(180deg, var(--son-600), var(--son-700)); color: var(--gold-300); border: 1px solid var(--gold-500); }
+.trade-btn-primary:hover { filter: brightness(1.08); }
+.trade-btn-secondary { background: rgba(110,20,20,0.10); color: var(--son-700); }
 
 @media (max-width: 767px) {
     .trade-cols { grid-template-columns: 1fr; }

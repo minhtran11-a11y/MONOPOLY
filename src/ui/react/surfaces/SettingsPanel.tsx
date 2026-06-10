@@ -265,10 +265,10 @@ function ChoiceButtons<T extends string | number>({
                         type="button"
                         aria-pressed={active}
                         onClick={() => onSelect(opt.value)}
-                        className={`flex-1 py-2 rounded-lg font-black text-xs uppercase tracking-widest transition-all ${
+                        className={`flex-1 py-2 rounded-lg font-black text-xs uppercase tracking-widest transition-all border ${
                             active
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-slate-900/10 text-slate-700 hover:bg-slate-900/20'
+                                ? 'bg-gradient-to-b from-gold-400 to-gold-600 text-lac-900 border-gold-300'
+                                : 'bg-gold-400/10 text-gold-300/80 border-transparent hover:bg-gold-400/20'
                         }`}
                     >
                         {opt.label}
@@ -352,7 +352,7 @@ function SettingsDialog() {
 
     return (
         <div
-            className="fixed inset-0 z-[1100] flex items-center justify-center bg-slate-900/80 backdrop-blur-md"
+            className="fixed inset-0 z-[1100] flex items-center justify-center bg-lac-900/85 backdrop-blur-md"
             role="dialog"
             aria-modal="true"
             aria-labelledby="settings-title"
@@ -360,11 +360,11 @@ function SettingsDialog() {
                 if (e.target === e.currentTarget) closePanel();
             }}
         >
-            <div className="glass-panel p-8 max-w-xl w-[92%] max-h-[88vh] overflow-y-auto custom-scrollbar border-white/20 relative pointer-events-auto">
+            <div className="glass-panel deco-frame p-8 max-w-xl w-[92%] max-h-[88vh] overflow-y-auto custom-scrollbar relative pointer-events-auto">
                 <div className="flex items-start justify-between mb-6">
                     <h2
                         id="settings-title"
-                        className="text-3xl font-black text-slate-900 uppercase italic leading-tight"
+                        className="font-display text-4xl font-black text-gold-300 leading-tight tracking-[0.01em]"
                     >
                         ⚙️ Cài đặt
                     </h2>
@@ -372,15 +372,15 @@ function SettingsDialog() {
                         type="button"
                         onClick={closePanel}
                         aria-label="Đóng cài đặt"
-                        className="px-5 py-2 rounded-xl bg-slate-900/10 hover:bg-rose-500 hover:text-white text-slate-700 font-black text-xs uppercase tracking-widest transition-all border border-white/20"
+                        className="px-5 py-2 rounded-xl bg-gold-400/10 hover:bg-son-600 hover:text-gold-300 text-gold-300/80 font-black text-xs uppercase tracking-widest transition-all border border-gold-600/40"
                     >
                         Thoát ✕
                     </button>
                 </div>
 
-                <section className="space-y-5 text-slate-700 font-bold">
+                <section className="space-y-5 text-ivory/85 font-bold">
                     <div>
-                        <h3 className="text-indigo-600 text-sm font-black mb-3 uppercase tracking-widest">
+                        <h3 className="text-gold-300 text-sm font-black mb-3 uppercase tracking-widest">
                             🔊 Âm thanh
                         </h3>
                         <VolumeSlider
@@ -412,8 +412,8 @@ function SettingsDialog() {
                         </div>
                     </div>
 
-                    <div className="border-t border-slate-900/10 pt-5">
-                        <h3 className="text-indigo-600 text-sm font-black mb-3 uppercase tracking-widest">
+                    <div className="border-t border-gold-600/25 pt-5">
+                        <h3 className="text-gold-300 text-sm font-black mb-3 uppercase tracking-widest">
                             🎮 Đồ hoạ & Hiệu ứng
                         </h3>
                         <div className="mb-3">
@@ -452,8 +452,8 @@ function SettingsDialog() {
                         </div>
                     </div>
 
-                    <div className="border-t border-slate-900/10 pt-5">
-                        <h3 className="text-indigo-600 text-sm font-black mb-3 uppercase tracking-widest">
+                    <div className="border-t border-gold-600/25 pt-5">
+                        <h3 className="text-gold-300 text-sm font-black mb-3 uppercase tracking-widest">
                             ♿ Trợ năng
                         </h3>
                         <div className="flex flex-wrap gap-3">
@@ -470,8 +470,8 @@ function SettingsDialog() {
                         </div>
                     </div>
 
-                    <div className="border-t border-slate-900/10 pt-5">
-                        <h3 className="text-indigo-600 text-sm font-black mb-3 uppercase tracking-widest">
+                    <div className="border-t border-gold-600/25 pt-5">
+                        <h3 className="text-gold-300 text-sm font-black mb-3 uppercase tracking-widest">
                             💾 Lưu trữ
                         </h3>
                         <CheckRow
@@ -486,14 +486,14 @@ function SettingsDialog() {
                     <button
                         type="button"
                         onClick={closePanel}
-                        className="flex-1 py-4 bg-white/20 hover:bg-white/30 text-slate-800 font-black uppercase tracking-widest rounded-2xl transition-all border border-white/30"
+                        className="flex-1 py-4 bg-gold-400/10 hover:bg-gold-400/20 text-gold-300 font-black uppercase tracking-widest rounded-2xl transition-all border border-gold-600/40"
                     >
                         Đóng
                     </button>
                     <button
                         type="button"
                         onClick={handleReset}
-                        className="py-4 px-6 bg-rose-600 hover:bg-rose-500 text-white font-black uppercase tracking-widest rounded-2xl transition-all"
+                        className="py-4 px-6 bg-gradient-to-b from-terracotta to-[#8A2A06] hover:brightness-110 text-gold-300 border border-gold-600/50 font-black uppercase tracking-widest rounded-2xl transition-all"
                     >
                         Mặc định
                     </button>

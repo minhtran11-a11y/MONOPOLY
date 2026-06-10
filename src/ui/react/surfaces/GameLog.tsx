@@ -105,13 +105,13 @@ function renderEntryContent(html: string): ReactElement {
     if (match) {
         const [, botName = '', quote = ''] = match;
         return (
-            <span className="text-slate-700">
-                <span className="text-indigo-500 font-black">[{botName}]:</span>{' '}
-                <span className="italic text-slate-600">"{quote}"</span>
+            <span className="text-ivory/80">
+                <span className="text-gold-300 font-black">[{botName}]:</span>{' '}
+                <span className="italic text-gold-300/70">"{quote}"</span>
             </span>
         );
     }
-    return <span className="text-slate-700">{stripTags(html)}</span>;
+    return <span className="text-ivory/80">{stripTags(html)}</span>;
 }
 
 const LogLine = memo(function LogLine({ entry }: { entry: LogEntry }) {
@@ -120,7 +120,7 @@ const LogLine = memo(function LogLine({ entry }: { entry: LogEntry }) {
         <div className="flex items-start gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
             <span
                 aria-hidden="true"
-                className="w-1.5 h-1.5 mt-2 bg-indigo-500 rounded-full flex-shrink-0 shadow-[0_0_8px_rgba(99,102,241,0.8)]"
+                className="w-1.5 h-1.5 mt-2 bg-gold-400 rounded-full flex-shrink-0 shadow-[0_0_8px_rgba(232,193,107,0.8)]"
             />
             {renderEntryContent(entry.html)}
         </div>
@@ -131,9 +131,7 @@ const LogLine = memo(function LogLine({ entry }: { entry: LogEntry }) {
 // Surface
 // ---------------------------------------------------------------------------
 
-const HEADER_BUTTON_CLASS =
-    'text-xs px-2 py-1 rounded-md bg-black/10 hover:bg-indigo-500 hover:text-white ' +
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 transition-all';
+const HEADER_BUTTON_CLASS = 'log-icon-btn focus-visible:outline-none';
 
 export default function GameLog() {
     const log = useUiStore((s) => s.log);
@@ -194,7 +192,7 @@ export default function GameLog() {
             className="glass-panel w-96 h-80 p-6 flex flex-col border-white/10 pointer-events-auto"
         >
             <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
-                <h4 className="text-sm font-black uppercase tracking-widest text-slate-500">
+                <h4 className="text-sm font-black uppercase tracking-widest text-gold-300/70">
                     Lịch sử trận đấu
                 </h4>
                 <div className="flex gap-1">
@@ -221,7 +219,7 @@ export default function GameLog() {
             <div
                 ref={scrollRef}
                 role="log"
-                className="flex-1 overflow-y-auto text-sm space-y-3 font-bold text-slate-700 custom-scrollbar"
+                className="flex-1 overflow-y-auto text-sm space-y-3 font-bold text-ivory/80 custom-scrollbar"
             >
                 {log.map((entry) => (
                     <LogLine key={entry.id} entry={entry} />

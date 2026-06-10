@@ -4,10 +4,10 @@ function drawMenuLogo() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     
-    // Background - Dark Slate with radial gradient
+    // Background - Lacquer oxblood radial gradient (SƠN MÀI)
     const grad = ctx.createRadialGradient(512, 512, 0, 512, 512, 800);
-    grad.addColorStop(0, '#1e293b');
-    grad.addColorStop(1, '#0f172a');
+    grad.addColorStop(0, '#241114');
+    grad.addColorStop(1, '#0B0A0C');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 1024, 1024);
 
@@ -28,16 +28,16 @@ function drawMenuLogo() {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 1024, 1024);
 
-    // Glossy Red Banner
-    ctx.fillStyle = '#ef4444';
+    // Glossy Sơn-mài Red Banner
+    ctx.fillStyle = '#8A1A1A';
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 40;
     ctx.shadowOffsetY = 20;
     ctx.fillRect(100, 320, 824, 380);
 
-    // Border Inner
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-    ctx.lineWidth = 10;
+    // Border Inner - gold leaf hairline (khắc vàng)
+    ctx.strokeStyle = 'rgba(232,193,107,0.55)';
+    ctx.lineWidth = 8;
     ctx.strokeRect(120, 340, 784, 340);
 
     // Main Text
@@ -54,7 +54,7 @@ function drawMenuLogo() {
     ctx.shadowBlur = 10;
     ctx.shadowOffsetY = 5;
     ctx.font = 'italic 800 90px "Be Vietnam Pro", sans-serif';
-    ctx.fillStyle = '#fbbf24';
+    ctx.fillStyle = '#F4D99A';
     ctx.fillText('VIỆT NAM', 512, 590);
 
     // Decorative Emoji

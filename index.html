@@ -16,8 +16,8 @@
          if the font arrives within ~100ms — avoids CLS while keeping LCP fast. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700;900&display=optional" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700;900&display=optional" rel="stylesheet"></noscript>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&display=optional" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&display=optional" rel="stylesheet"></noscript>
 
     <!-- CSS (Tailwind build-time + style.css) and the lazy Three.js/postFX loaders
          are bundled through /src/main.js — no CDN dependencies remain. -->
@@ -25,75 +25,110 @@
          when the game launches, preserving the fast-LCP menu strategy. -->
 </head>
 
-<body class="bg-slate-900 text-slate-100 overflow-hidden font-sans">
+<body class="bg-lac-900 text-ivory overflow-hidden font-sans">
 
     <!-- Layer 0: 3D Board Canvas -->
     <div id="canvas-container" class="fixed inset-0 z-0"></div>
     <canvas id="money-bg" class="fixed inset-0 z-[-1] pointer-events-none opacity-40"></canvas>
 
     <!-- Layer 1: Main Menu Layer -->
-    <div id="main-menu-layer" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 overflow-hidden transition-all duration-700">
-        <!-- Background Decor -->
+    <div id="main-menu-layer" class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden transition-all duration-700">
+        <!-- Background Decor — warm oxblood lacquer glow -->
         <div class="absolute inset-0 overflow-hidden">
-            <div class="absolute -top-24 -left-24 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px]"></div>
-            <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-rose-600/20 rounded-full blur-[120px]"></div>
+            <div class="absolute -top-24 -left-24 w-96 h-96 bg-son-700/30 rounded-full blur-[120px]"></div>
+            <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-gold-600/15 rounded-full blur-[120px]"></div>
+        </div>
+        <!-- Trống đồng (Đông Sơn drum) watermark — slow-spinning gold ring signature.
+             Concentric rings + 16 sun-rays radiating from a central star, the
+             defining motif of the bronze Đông Sơn drum. -->
+        <div class="drum-watermark" aria-hidden="true">
+            <svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="0.6">
+                <circle cx="100" cy="100" r="97"/>
+                <circle cx="100" cy="100" r="92" opacity="0.5"/>
+                <circle cx="100" cy="100" r="74"/>
+                <circle cx="100" cy="100" r="70" opacity="0.5"/>
+                <circle cx="100" cy="100" r="50"/>
+                <circle cx="100" cy="100" r="30"/>
+                <!-- 16 sun-rays from centre to the inner ring -->
+                <g stroke-width="0.7">
+                    <line x1="100" y1="70" x2="100" y2="30"/>
+                    <line x1="100" y1="130" x2="100" y2="170"/>
+                    <line x1="70" y1="100" x2="30" y2="100"/>
+                    <line x1="130" y1="100" x2="170" y2="100"/>
+                    <line x1="78.8" y1="78.8" x2="50.5" y2="50.5"/>
+                    <line x1="121.2" y1="78.8" x2="149.5" y2="50.5"/>
+                    <line x1="78.8" y1="121.2" x2="50.5" y2="149.5"/>
+                    <line x1="121.2" y1="121.2" x2="149.5" y2="149.5"/>
+                    <line x1="88.5" y1="72.6" x2="73.5" y2="34.2"/>
+                    <line x1="111.5" y1="72.6" x2="126.5" y2="34.2"/>
+                    <line x1="88.5" y1="127.4" x2="73.5" y2="165.8"/>
+                    <line x1="111.5" y1="127.4" x2="126.5" y2="165.8"/>
+                    <line x1="72.6" y1="88.5" x2="34.2" y2="73.5"/>
+                    <line x1="72.6" y1="111.5" x2="34.2" y2="126.5"/>
+                    <line x1="127.4" y1="88.5" x2="165.8" y2="73.5"/>
+                    <line x1="127.4" y1="111.5" x2="165.8" y2="126.5"/>
+                </g>
+                <!-- central 12-point star -->
+                <g stroke="none" fill="currentColor">
+                    <path d="M100 84 L104 96 L116 96 L106 104 L110 116 L100 108 L90 116 L94 104 L84 96 L96 96 Z"/>
+                </g>
+            </svg>
         </div>
 
         <!-- 1. Intro Screen -->
         <div id="screen-intro" class="menu-screen relative z-10 flex flex-col items-center animate-in fade-in zoom-in duration-1000">
-            <div class="mb-8 drop-shadow-[0_0_50px_rgba(99,102,241,0.5)] transform hover:scale-110 transition-transform duration-700 animate-float">
+            <div class="mb-8 drop-shadow-[0_0_50px_rgba(184,137,60,0.45)] transform hover:scale-110 transition-transform duration-700 animate-float">
                 <canvas id="menu-logo-canvas" width="1024" height="1024" style="width:320px;height:320px;"></canvas>
             </div>
-            <button id="btn-start-game" class="group relative px-16 py-6 bg-white text-slate-900 font-black text-2xl uppercase tracking-[0.3em] rounded-full hover:bg-indigo-500 hover:text-white transition-all duration-500 active:scale-90 overflow-hidden shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+            <button id="btn-start-game" class="btn-primary group px-16 py-6 text-2xl uppercase tracking-[0.3em] active:scale-90">
                 <span class="relative z-10">Bắt đầu chơi</span>
-                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
             </button>
-            <button id="btn-resume-game" class="hidden mt-4 px-10 py-3 bg-emerald-500/80 hover:bg-emerald-500 text-white font-black text-sm uppercase tracking-[0.25em] rounded-full transition-all backdrop-blur-md border border-white/20">
+            <button id="btn-resume-game" class="hidden mt-4 px-10 py-3 bg-jade-500/85 hover:bg-jade-500 text-ivory font-black text-sm uppercase tracking-[0.25em] rounded-full transition-all border border-gold-500/40">
                 💾 Tiếp tục ván cũ
             </button>
         </div>
 
         <!-- 2. Mode Selection -->
         <div id="screen-modes" class="menu-screen hidden relative z-10 w-full max-w-4xl px-8 flex flex-col items-center">
-            <h2 class="text-4xl font-black text-white mb-16 uppercase italic tracking-widest text-center">Chọn chế độ chơi</h2>
+            <h2 class="font-display text-5xl font-black text-gold-300 mb-16 tracking-[0.01em] text-center drop-shadow-[0_10px_30px_rgba(0,0,0,0.6)]">Chọn chế độ chơi</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-                <button id="mode-bot-trigger" class="glass-panel p-12 flex flex-col items-center gap-6 group hover:border-indigo-500 transition-all duration-500">
-                    <div class="w-24 h-24 bg-indigo-500/10 rounded-3xl flex items-center justify-center text-5xl group-hover:scale-110 transition-transform">🤖</div>
+                <button id="mode-bot-trigger" class="glass-panel p-12 flex flex-col items-center gap-6 group hover:border-gold-400 transition-all duration-500">
+                    <div class="w-24 h-24 bg-gold-400/10 ring-1 ring-gold-500/40 rounded-3xl flex items-center justify-center text-5xl group-hover:scale-110 transition-transform">🤖</div>
                     <div class="text-center">
-                        <h3 class="text-2xl font-black text-white uppercase mb-2">BOT SOLO</h3>
-                        <p class="text-slate-400 text-sm font-bold uppercase tracking-widest">Đấu với máy (NPC)</p>
+                        <h3 class="text-2xl font-black text-ivory uppercase mb-2">BOT SOLO</h3>
+                        <p class="text-gold-300/70 text-sm font-bold uppercase tracking-widest">Đấu với máy (NPC)</p>
                     </div>
                 </button>
-                <div id="mode-online-trigger" class="glass-panel p-12 flex flex-col items-center gap-6 opacity-60 cursor-not-allowed border-rose-500/30 relative overflow-hidden grayscale">
-                    <div class="absolute top-4 right-4 bg-rose-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg animate-pulse">SẮP RA MẮT</div>
-                    <div class="w-24 h-24 bg-rose-500/10 rounded-3xl flex items-center justify-center text-5xl">🌐</div>
+                <div id="mode-online-trigger" class="glass-panel p-12 flex flex-col items-center gap-6 opacity-60 cursor-not-allowed border-gold-600/30 relative overflow-hidden grayscale">
+                    <div class="absolute top-4 right-4 bg-son-600 text-gold-300 ring-1 ring-gold-400/60 text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg animate-pulse">SẮP RA MẮT</div>
+                    <div class="w-24 h-24 bg-son-600/15 ring-1 ring-gold-500/40 rounded-3xl flex items-center justify-center text-5xl">🌐</div>
                     <div class="text-center">
-                        <h3 class="text-2xl font-black text-white uppercase mb-2">ONLINE</h3>
-                        <p class="text-slate-400 text-sm font-bold uppercase tracking-widest">Đang nâng cấp hệ thống</p>
+                        <h3 class="text-2xl font-black text-ivory uppercase mb-2">ONLINE</h3>
+                        <p class="text-gold-300/70 text-sm font-bold uppercase tracking-widest">Đang nâng cấp hệ thống</p>
                     </div>
                 </div>
             </div>
-            <button class="back-to-intro mt-12 text-slate-500 hover:text-white font-black uppercase text-xs tracking-widest transition-colors">← Quay lại</button>
+            <button class="back-to-intro mt-12 btn-back text-xs">← Quay lại</button>
         </div>
 
         <!-- 3. Bot Selection -->
         <div id="screen-bot-detail" class="menu-screen hidden relative z-10 w-full max-w-5xl px-8">
-            <h2 class="text-4xl font-black text-white mb-16 uppercase italic tracking-widest text-center">Tùy chọn BOT Solo</h2>
+            <h2 class="font-display text-5xl font-black text-gold-300 mb-16 tracking-[0.01em] text-center drop-shadow-[0_10px_30px_rgba(0,0,0,0.6)]">Tùy chọn BOT Solo</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <button onclick="MenuManager.launchGame(2, 'bot')" class="glass-panel p-8 flex flex-col items-center gap-4 group hover:bg-white hover:text-slate-900 transition-all">
-                    <div class="text-4xl font-black">1vs1</div>
-                    <div class="text-xs font-black uppercase tracking-widest">1 Player vs 1 Bot</div>
+                <button onclick="MenuManager.launchGame(2, 'bot')" class="glass-panel p-8 flex flex-col items-center gap-4 group hover:border-gold-400 transition-all">
+                    <div class="font-display text-5xl font-black text-gold-300">1vs1</div>
+                    <div class="text-xs font-black uppercase tracking-widest text-ivory">1 Player vs 1 Bot</div>
                 </button>
-                <button onclick="MenuManager.launchGame(3, 'bot')" class="glass-panel p-8 flex flex-col items-center gap-4 group hover:bg-white hover:text-slate-900 transition-all">
-                    <div class="text-4xl font-black">1vs2</div>
-                    <div class="text-xs font-black uppercase tracking-widest">1 Player vs 2 Bot</div>
+                <button onclick="MenuManager.launchGame(3, 'bot')" class="glass-panel p-8 flex flex-col items-center gap-4 group hover:border-gold-400 transition-all">
+                    <div class="font-display text-5xl font-black text-gold-300">1vs2</div>
+                    <div class="text-xs font-black uppercase tracking-widest text-ivory">1 Player vs 2 Bot</div>
                 </button>
-                <button onclick="MenuManager.launchGame(4, 'bot')" class="glass-panel p-8 flex flex-col items-center gap-4 group hover:bg-white hover:text-slate-900 transition-all">
-                    <div class="text-4xl font-black">1vs3</div>
-                    <div class="text-xs font-black uppercase tracking-widest">1 Player vs 3 Bot</div>
+                <button onclick="MenuManager.launchGame(4, 'bot')" class="glass-panel p-8 flex flex-col items-center gap-4 group hover:border-gold-400 transition-all">
+                    <div class="font-display text-5xl font-black text-gold-300">1vs3</div>
+                    <div class="text-xs font-black uppercase tracking-widest text-ivory">1 Player vs 3 Bot</div>
                 </button>
             </div>
-            <div class="flex justify-center mt-12"><button class="back-to-modes text-slate-500 hover:text-white font-black uppercase text-xs tracking-widest">← Quay lại</button></div>
+            <div class="flex justify-center mt-12"><button class="back-to-modes btn-back text-xs">← Quay lại</button></div>
         </div>
 
     </div>
@@ -115,12 +150,12 @@
         <!-- Game Log -->
         <div class="absolute top-8 left-8 flex flex-col gap-4 pointer-events-auto">
             <div class="flex gap-2">
-                <button id="btn-show-rules" aria-label="Xem luật chơi" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-white hover:text-slate-900 transition-all border-white/20">Luật chơi 📖</button>
-                <button id="btn-mortgage-menu" aria-label="Mở bảng cầm cố" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-amber-500 hover:text-white transition-all border-white/20">Cầm cố 🏦</button>
-                <button id="btn-trade" aria-label="Đề nghị giao dịch" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-purple-500 hover:text-white transition-all border-white/20">Giao dịch 🤝</button>
-                <button id="btn-settings" aria-label="Mở cài đặt" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-500 hover:text-white transition-all border-white/20">Cài đặt ⚙️</button>
-                <button id="btn-surrender" aria-label="Đầu hàng" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-rose-500 hover:text-white transition-all border-white/20">Đầu hàng 🏳️</button>
-                <button id="btn-quit" aria-label="Trở về menu chính" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-500 hover:text-white transition-all border-white/20">Trở về 🏠</button>
+                <button id="btn-show-rules" aria-label="Xem luật chơi" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] transition-all">Luật chơi 📖</button>
+                <button id="btn-mortgage-menu" aria-label="Mở bảng cầm cố" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] transition-all">Cầm cố 🏦</button>
+                <button id="btn-trade" aria-label="Đề nghị giao dịch" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] transition-all">Giao dịch 🤝</button>
+                <button id="btn-settings" aria-label="Mở cài đặt" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] transition-all">Cài đặt ⚙️</button>
+                <button id="btn-surrender" aria-label="Đầu hàng" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] transition-all">Đầu hàng 🏳️</button>
+                <button id="btn-quit" aria-label="Trở về menu chính" class="hud-btn glass-panel px-6 py-3 font-black text-xs uppercase tracking-[0.2em] transition-all">Trở về 🏠</button>
             </div>
 
             <!-- Mortgage Panel (always accessible) -->
@@ -129,13 +164,13 @@
             
             <div class="glass-panel w-96 h-80 p-6 flex flex-col border-white/10">
                 <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
-                    <h4 class="text-sm font-black uppercase tracking-widest text-slate-500">Lịch sử trận đấu</h4>
+                    <h4 class="text-sm font-black uppercase tracking-widest text-gold-300/70">Lịch sử trận đấu</h4>
                     <div class="flex gap-1">
-                        <button onclick="window.replayLastRoll && window.replayLastRoll()" aria-label="Xem lại lần đổ xí ngầu" title="Xem lại lần đổ xí ngầu" class="text-xs px-2 py-1 rounded-md bg-black/10 hover:bg-indigo-500 hover:text-white transition-all">🎲</button>
-                        <button onclick="window.exportGameLog && window.exportGameLog()" aria-label="Xuất nhật ký" title="Xuất nhật ký" class="text-xs px-2 py-1 rounded-md bg-black/10 hover:bg-indigo-500 hover:text-white transition-all">📋</button>
+                        <button onclick="window.replayLastRoll && window.replayLastRoll()" aria-label="Xem lại lần đổ xí ngầu" title="Xem lại lần đổ xí ngầu" class="log-icon-btn">🎲</button>
+                        <button onclick="window.exportGameLog && window.exportGameLog()" aria-label="Xuất nhật ký" title="Xuất nhật ký" class="log-icon-btn">📋</button>
                     </div>
                 </div>
-                <div id="game-log" class="flex-1 overflow-y-auto text-sm space-y-3 font-bold text-slate-700 custom-scrollbar">
+                <div id="game-log" class="flex-1 overflow-y-auto text-sm space-y-3 font-bold text-ivory/80 custom-scrollbar">
                     <!-- Log Messages -->
                 </div>
             </div>
@@ -145,9 +180,9 @@
 
 
         <!-- Action Central -->
-        <div id="action-modal" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 glass-panel p-10 text-center scale-0 transition-all duration-500 pointer-events-auto border-white/30 shadow-[0_30px_100px_rgba(0,0,0,0.5)]">
-            <h2 id="modal-title" class="text-4xl font-black text-slate-900 mb-2 uppercase">Lượt của bạn</h2>
-            <p id="modal-desc" class="text-slate-600 mb-8 font-bold text-lg">Đến lượt bạn lắc xí ngầu...</p>
+        <div id="action-modal" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 glass-panel paper p-10 text-center scale-0 transition-all duration-500 pointer-events-auto shadow-[0_30px_100px_rgba(0,0,0,0.5)]">
+            <h2 id="modal-title" class="font-display text-[2.6rem] leading-[1.05] font-black text-son-700 mb-3">Lượt của bạn</h2>
+            <p id="modal-desc" class="text-lac-800/75 mb-8 font-bold text-lg">Đến lượt bạn lắc xí ngầu...</p>
             <div id="modal-buttons" class="flex justify-center gap-4 flex-wrap">
                 <button id="btn-roll" class="btn-action bg-indigo-600">ĐỔ XÍ NGẦU</button>
                 <button id="btn-build-menu" class="btn-action bg-orange-500 hidden">XÂY NHÀ</button>
@@ -162,9 +197,9 @@
         <div id="tile-info" class="absolute bottom-36 left-1/2 -translate-x-1/2 glass-panel px-10 py-5 flex items-center gap-8 translate-y-32 opacity-0 transition-all duration-700 pointer-events-auto border-white/40">
             <div id="tile-color" class="w-16 h-16 rounded-2xl shadow-xl"></div>
             <div>
-                <h3 id="tile-name" class="text-2xl font-black text-slate-900">Bất Động Sản</h3>
-                <p id="tile-price" class="text-lg font-bold text-slate-600">Giá: $0 | Thuê: $0</p>
-                <p id="tile-owner" class="text-xs font-black uppercase text-slate-400 mt-1 tracking-widest">CHƯA CÓ CHỦ SỞ HỮU</p>
+                <h3 id="tile-name" class="font-display text-2xl font-black text-ivory">Bất Động Sản</h3>
+                <p id="tile-price" class="text-lg font-bold text-gold-300/80">Giá: $0 | Thuê: $0</p>
+                <p id="tile-owner" class="text-xs font-black uppercase text-gold-300/55 mt-1 tracking-widest">CHƯA CÓ CHỦ SỞ HỮU</p>
             </div>
         </div>
 
@@ -172,32 +207,32 @@
     </div>
 
     <!-- Rules Modal (top-level, outside #game-ui-layer to avoid pointer-events issues) -->
-    <div id="rules-modal" class="hidden fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-md" style="pointer-events: auto;">
-        <div id="rules-modal-panel" class="glass-panel p-10 max-w-2xl w-[90%] max-h-[85vh] overflow-y-auto custom-scrollbar border-white/20 relative">
+    <div id="rules-modal" class="hidden fixed inset-0 z-[1000] flex items-center justify-center bg-lac-900/85 backdrop-blur-md" style="pointer-events: auto;">
+        <div id="rules-modal-panel" class="glass-panel paper p-10 max-w-2xl w-[90%] max-h-[85vh] overflow-y-auto custom-scrollbar relative">
             <div class="flex items-start justify-between mb-8">
-                <h2 class="text-4xl font-black text-slate-900 uppercase italic leading-tight">📖 Thể lệ<br>trò chơi</h2>
+                <h2 class="font-display text-[2.6rem] font-black text-son-700 leading-tight">📖 Thể lệ<br>trò chơi</h2>
                 <button data-close-rules type="button"
-                    class="px-6 py-2 rounded-xl bg-slate-900/10 hover:bg-rose-500 hover:text-white text-slate-600 font-black text-xs uppercase tracking-widest transition-all duration-300 flex-shrink-0 ml-4 border border-white/20"
+                    class="px-6 py-2 rounded-xl bg-son-700/10 hover:bg-son-600 hover:text-gold-300 text-son-700 font-black text-xs uppercase tracking-widest transition-all duration-300 flex-shrink-0 ml-4 border border-gold-500/40"
                     title="Đóng (Esc)">
                     Thoát ✕
                 </button>
             </div>
 
-            <div class="space-y-6 text-slate-700 font-bold leading-relaxed">
+            <div class="space-y-6 text-lac-800/85 font-bold leading-relaxed">
                 <section>
-                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Chuẩn bị</h3>
+                    <h3 class="text-son-700 text-xl font-black mb-2 uppercase">Chuẩn bị</h3>
                     <p>Mỗi người chơi chọn 1 quân cờ, nhận một số tiền vốn nhất định từ ngân hàng (thông thường là $1500).</p>
                 </section>
                 <section>
-                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Bắt đầu</h3>
+                    <h3 class="text-son-700 text-xl font-black mb-2 uppercase">Bắt đầu</h3>
                     <p>Tung xúc xắc, ai cao điểm nhất đi trước. Người chơi đi theo chiều kim đồng hồ.</p>
                 </section>
                 <section>
-                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Di chuyển</h3>
+                    <h3 class="text-son-700 text-xl font-black mb-2 uppercase">Di chuyển</h3>
                     <p>Tung 2 viên xúc xắc và di chuyển quân cờ tương ứng.</p>
                 </section>
                 <section>
-                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Hành động tại ô dừng chân</h3>
+                    <h3 class="text-son-700 text-xl font-black mb-2 uppercase">Hành động tại ô dừng chân</h3>
                     <ul class="list-disc list-inside ml-2 mt-2 space-y-2">
                         <li><strong>Mua đất:</strong> Trả tiền cho ngân hàng để sở hữu thẻ đất.</li>
                         <li><strong>Trả tiền thuê:</strong> Nếu dừng ở đất đối thủ, phải trả tiền thuê theo thẻ.</li>
@@ -206,18 +241,18 @@
                     </ul>
                 </section>
                 <section>
-                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Phá sản</h3>
+                    <h3 class="text-son-700 text-xl font-black mb-2 uppercase">Phá sản</h3>
                     <p>Khi nợ tiền đối thủ hoặc ngân hàng mà không có tiền mặt hay tài sản để thế chấp, bạn bị loại khỏi trò chơi.</p>
                 </section>
                 <section>
-                    <h3 class="text-indigo-600 text-xl font-black mb-2 uppercase">Chiến thắng</h3>
+                    <h3 class="text-son-700 text-xl font-black mb-2 uppercase">Chiến thắng</h3>
                     <p>Trò chơi kết thúc khi chỉ còn 1 người duy nhất không phá sản.</p>
                 </section>
             </div>
 
             <div class="flex gap-4 mt-10">
                 <button data-close-rules type="button"
-                    class="flex-1 py-5 bg-white/20 hover:bg-white/30 text-slate-800 font-black uppercase tracking-widest rounded-2xl transition-all duration-300 border border-white/30 hover:scale-105">
+                    class="flex-1 py-5 bg-son-700/10 hover:bg-son-700/20 text-son-700 font-black uppercase tracking-widest rounded-2xl transition-all duration-300 border border-gold-500/40 hover:scale-105">
                     ← Tiếp tục chơi
                 </button>
                 <button data-close-rules type="button"

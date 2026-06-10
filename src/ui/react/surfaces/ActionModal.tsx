@@ -58,17 +58,26 @@ interface ButtonAppearance {
     bgClass: string;
 }
 
+/**
+ * Per-kind semantic lacquer mapping. The bgClass tokens below are kept ONLY
+ * because css/style.css `.btn-action.bg-*` selectors re-skin them into sơn-mài
+ * tints — they never render as raw Tailwind blue/green. Semantics:
+ *   roll / buy  -> primary sơn-mài red + gold border (the headline action)
+ *   build       -> terracotta lacquer (a spend action, distinct from buy)
+ *   skip        -> warm taupe lacquer (secondary / dismiss)
+ *   end         -> gold-on-lacquer (turn close — the "next" rhythm beat)
+ */
 const BUTTON_APPEARANCE: Record<string, ButtonAppearance> = {
-    roll: { label: 'ĐỔ XÍ NGẦU', bgClass: 'bg-indigo-600' },
-    'build-menu': { label: 'XÂY NHÀ', bgClass: 'bg-orange-500' },
-    buy: { label: 'MUA ĐẤT', bgClass: 'bg-emerald-600' },
-    skip: { label: 'BỎ QUA', bgClass: 'bg-slate-500' },
-    end: { label: 'KẾT THÚC LƯỢT', bgClass: 'bg-purple-600' },
+    roll: { label: 'ĐỔ XÍ NGẦU', bgClass: 'btn-son' },
+    'build-menu': { label: 'XÂY NHÀ', bgClass: 'btn-terracotta' },
+    buy: { label: 'MUA ĐẤT', bgClass: 'btn-son' },
+    skip: { label: 'BỎ QUA', bgClass: 'btn-taupe' },
+    end: { label: 'KẾT THÚC LƯỢT', bgClass: 'btn-gold' },
 };
 
 /** ModalButtonKind is open-ended ((string & {})) — degrade gracefully. */
 function appearanceFor(kind: string): ButtonAppearance {
-    return BUTTON_APPEARANCE[kind] ?? { label: kind.toUpperCase(), bgClass: 'bg-slate-700' };
+    return BUTTON_APPEARANCE[kind] ?? { label: kind.toUpperCase(), bgClass: 'btn-taupe' };
 }
 
 // ---------------------------------------------------------------------------
@@ -205,13 +214,13 @@ export default function ActionModal() {
                 aria-modal="true"
                 aria-labelledby={titleId}
                 aria-describedby={descId}
-                className={`glass-panel pointer-events-auto p-10 text-center border-white/30 shadow-[0_30px_100px_rgba(0,0,0,0.5)] transition-all duration-500 max-md:w-[92vw] max-md:max-w-[480px] max-md:p-6 ${
+                className={`glass-panel paper pointer-events-auto p-10 text-center shadow-[0_40px_110px_rgba(0,0,0,0.6)] transition-all duration-500 max-md:w-[92vw] max-md:max-w-[480px] max-md:p-6 ${
                     isOpen ? 'scale-100' : 'scale-0'
                 }`}
             >
                 <h2
                     id={titleId}
-                    className="text-4xl font-black text-slate-900 mb-2 uppercase max-md:text-2xl"
+                    className="font-display text-[2.6rem] leading-[1.05] font-black text-son-700 mb-3 tracking-[0.01em] max-md:text-3xl"
                 >
                     {modal.title}
                 </h2>
@@ -219,7 +228,7 @@ export default function ActionModal() {
                     sends multi-line descs (buy offer: name\nGiá\nTiền thuê). */}
                 <p
                     id={descId}
-                    className="text-slate-600 mb-8 font-bold text-lg whitespace-pre-line max-md:text-[0.9rem]"
+                    className="text-lac-800/75 mb-8 font-bold text-lg whitespace-pre-line max-md:text-[0.9rem]"
                 >
                     {modal.desc}
                 </p>

@@ -128,15 +128,15 @@ installFacade(
 
 function BuildRow({ item }: { item: BuildItem }) {
     return (
-        <div className="bg-white/5 rounded-xl p-3 border border-white/5 flex flex-col gap-2">
+        <div className="bg-gold-400/[0.06] rounded-xl p-3 border border-gold-600/15 flex flex-col gap-2">
             <div className="flex justify-between items-start">
                 <div className="text-left">
-                    <div className="text-[10px] font-black uppercase text-slate-900 line-clamp-1">
+                    <div className="text-[10px] font-black uppercase text-ivory line-clamp-1">
                         {item.name}
                     </div>
-                    <div className="text-[9px] font-bold text-slate-500 italic">
+                    <div className="text-[9px] font-bold text-gold-300/55 italic">
                         {item.isMortgaged ? (
-                            <span className="text-red-500">ĐANG CẦM CỐ</span>
+                            <span className="text-terracotta">ĐANG CẦM CỐ</span>
                         ) : item.houses === 5 ? (
                             'Khách sạn'
                         ) : item.houses > 0 ? (
@@ -152,7 +152,7 @@ function BuildRow({ item }: { item: BuildItem }) {
                     <button
                         type="button"
                         onClick={() => handleBuild(item.tileId)}
-                        className="flex-1 bg-slate-900 hover:bg-indigo-600 text-white text-[9px] font-black py-2 rounded-lg transition-all"
+                        className="flex-1 bg-gradient-to-b from-son-600 to-son-700 hover:brightness-110 text-gold-300 border border-gold-600 text-[9px] font-black py-2 rounded-lg transition-all"
                     >
                         {`XÂY NÀY ($${item.houseCost ?? 0})`}
                     </button>
@@ -164,13 +164,13 @@ function BuildRow({ item }: { item: BuildItem }) {
 
 function MortgageRow({ item }: { item: MortgageItem }) {
     return (
-        <div className="bg-white/5 rounded-xl p-3 border border-white/5 flex justify-between items-center gap-3">
+        <div className="bg-gold-400/[0.06] rounded-xl p-3 border border-gold-600/15 flex justify-between items-center gap-3">
             <div className="text-left flex-1">
-                <div className="text-[10px] font-black uppercase text-slate-900 line-clamp-1">
+                <div className="text-[10px] font-black uppercase text-ivory line-clamp-1">
                     {item.name}
                 </div>
                 <div
-                    className={`text-[9px] font-bold ${item.isMortgaged ? 'text-red-500' : 'text-emerald-500'} italic`}
+                    className={`text-[9px] font-bold ${item.isMortgaged ? 'text-terracotta' : 'text-jade-400'} italic`}
                 >
                     {item.isMortgaged
                         ? 'ĐANG CẦM CỐ'
@@ -183,7 +183,7 @@ function MortgageRow({ item }: { item: MortgageItem }) {
                 <button
                     type="button"
                     onClick={() => handleToggleMortgage(item.tileId)}
-                    className={`${item.isMortgaged ? 'bg-emerald-600' : 'bg-amber-600'} text-white text-[9px] font-black py-2 px-3 rounded-lg transition-all uppercase whitespace-nowrap`}
+                    className={`border text-[9px] font-black py-2 px-3 rounded-lg transition-all uppercase whitespace-nowrap ${item.isMortgaged ? 'bg-gradient-to-b from-jade-400 to-jade-500 text-ivory border-jade-500' : 'bg-gradient-to-b from-gold-400 to-gold-600 text-lac-900 border-gold-300'}`}
                 >
                     {item.isMortgaged ? `Chuộc $${item.redeemCost}` : `Cầm $${item.mortgageValue}`}
                 </button>
@@ -209,10 +209,10 @@ function BuildMenuPanel({ items }: { items: BuildItem[] }) {
             aria-labelledby="react-build-submenu-title"
             className="fixed left-1/2 top-[56%] -translate-x-1/2 z-40 w-[30rem] max-w-[92vw] glass-panel border-white/10 overflow-hidden flex flex-col pointer-events-auto animate-in fade-in slide-in-from-bottom-2 duration-200"
         >
-            <header className="p-4 border-b border-white/10 flex justify-between items-center bg-slate-900/20">
+            <header className="p-4 border-b border-white/10 flex justify-between items-center bg-lac-800/40">
                 <h5
                     id="react-build-submenu-title"
-                    className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500"
+                    className="text-[10px] font-black uppercase tracking-[0.2em] text-gold-300"
                 >
                     Quản lý bất động sản
                 </h5>
@@ -220,14 +220,14 @@ function BuildMenuPanel({ items }: { items: BuildItem[] }) {
                     type="button"
                     aria-label="Đóng quản lý bất động sản"
                     onClick={() => uiStore.getState().hideBuildMenu()}
-                    className="text-slate-400 hover:text-white"
+                    className="text-gold-300/55 hover:text-gold-300"
                 >
                     ✕
                 </button>
             </header>
             <div className="max-h-64 overflow-y-auto custom-scrollbar p-2 space-y-2">
                 {items.length === 0 && (
-                    <div className="text-[10px] text-center py-4 text-slate-500 font-bold uppercase italic">
+                    <div className="text-[10px] text-center py-4 text-gold-300/50 font-bold uppercase italic">
                         Chưa sở hữu đất
                     </div>
                 )}
@@ -257,27 +257,27 @@ function MortgagePanelCard({
             className="fixed left-8 top-[5.5rem] z-40 w-96 max-w-[calc(100vw-4rem)] max-h-80 glass-panel border-white/10 overflow-hidden flex flex-col pointer-events-auto animate-in fade-in slide-in-from-left-2 duration-200"
         >
             {notYourTurn ? (
-                <div className="p-6 text-center text-slate-500 text-[10px] font-black uppercase">
+                <div className="p-6 text-center text-gold-300/55 text-[10px] font-black uppercase">
                     Không phải lượt của bạn
                 </div>
             ) : (
                 <>
-                    <header className="p-4 border-b border-white/10 flex justify-between items-center bg-slate-900/20">
-                        <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">
+                    <header className="p-4 border-b border-white/10 flex justify-between items-center bg-lac-800/40">
+                        <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-gold-400">
                             🏦 Cầm cố / Chuộc đất
                         </h5>
                         <button
                             type="button"
                             aria-label="Đóng bảng cầm cố"
                             onClick={() => uiStore.getState().hideMortgagePanel()}
-                            className="text-slate-400 hover:text-white"
+                            className="text-gold-300/55 hover:text-gold-300"
                         >
                             ✕
                         </button>
                     </header>
                     <div className="max-h-56 overflow-y-auto custom-scrollbar p-2 space-y-2">
                         {items.length === 0 && (
-                            <div className="text-[10px] text-center py-4 text-slate-500 font-bold uppercase italic">
+                            <div className="text-[10px] text-center py-4 text-gold-300/50 font-bold uppercase italic">
                                 Chưa sở hữu đất nào
                             </div>
                         )}

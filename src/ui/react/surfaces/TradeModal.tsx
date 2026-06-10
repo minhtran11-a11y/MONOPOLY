@@ -240,7 +240,7 @@ function TradeColumn({
                     min={0}
                     value={moneyValue}
                     onChange={(event) => onMoneyChange(event.target.value)}
-                    className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500"
+                    className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold-400"
                 />
             </label>
             <div className="trade-props">
@@ -250,7 +250,7 @@ function TradeColumn({
                     items.map((tile) => (
                         <label
                             key={tile.id}
-                            className="trade-prop transition-colors hover:border-indigo-300"
+                            className="trade-prop transition-colors hover:border-gold-400"
                         >
                             <input
                                 type="checkbox"
@@ -365,7 +365,7 @@ function TradeDialog() {
                     <label className="trade-partner block">
                         <span className="trade-label">Đối tác</span>
                         <select
-                            className="trade-input focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500"
+                            className="trade-input focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold-400"
                             value={partnerId ?? ''}
                             disabled={partners.length === 0}
                             onChange={(event) => {
@@ -407,14 +407,14 @@ function TradeDialog() {
                 <footer className="trade-footer">
                     <button
                         type="button"
-                        className="trade-btn trade-btn-secondary focus-visible:ring-2 focus-visible:ring-indigo-400"
+                        className="trade-btn trade-btn-secondary focus-visible:ring-2 focus-visible:ring-gold-400"
                         onClick={closeTradeModal}
                     >
                         Huỷ
                     </button>
                     <button
                         type="button"
-                        className="trade-btn trade-btn-primary focus-visible:ring-2 focus-visible:ring-indigo-300 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="trade-btn trade-btn-primary focus-visible:ring-2 focus-visible:ring-gold-300 disabled:cursor-not-allowed disabled:opacity-50"
                         disabled={partnerId === null}
                         onClick={handleSubmit}
                     >

@@ -85,7 +85,7 @@ function PlayerCard({ player, isCurrent }: PlayerCardProps) {
     return (
         <div className={cardClass} style={{ borderLeftColor: player.colorHex }}>
             <div className="flex justify-between items-center gap-2">
-                <span className="font-black text-slate-900 text-lg truncate flex items-center min-w-0">
+                <span className="font-black text-ivory text-lg truncate flex items-center min-w-0">
                     <span
                         className="w-2 h-2 rounded-full flex-shrink-0 mr-2"
                         style={{ backgroundColor: player.colorHex }}
@@ -95,33 +95,34 @@ function PlayerCard({ player, isCurrent }: PlayerCardProps) {
                         {player.name} {player.isBot ? '🤖' : '👤'}
                     </span>
                     {player.tokenKind !== '' && (
-                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-2 flex-shrink-0">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-gold-300/55 ml-2 flex-shrink-0">
                             {player.tokenKind}
                         </span>
                     )}
                 </span>
                 <span
-                    className="text-[10px] font-black px-2 py-1 bg-black/10 rounded-lg uppercase tracking-widest whitespace-nowrap flex-shrink-0"
+                    className="text-[10px] font-black px-2 py-1 bg-gold-400/10 text-gold-300/80 rounded-lg uppercase tracking-widest whitespace-nowrap flex-shrink-0"
                     title={tileName}
                 >
                     {player.position} / {BOARD_SIZE}
                 </span>
             </div>
-            <div className="text-3xl font-black text-indigo-700 my-1">
+            {/* Money — the headline figure. Gold leaf, serif, tabular for alignment. */}
+            <div className="font-display text-3xl font-black text-gold-300 my-1 tabular-nums tracking-tight">
                 {formatMoney(player.money)}
             </div>
             {tileName !== '' && (
-                <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate">
+                <div className="text-[9px] font-bold text-gold-300/55 uppercase tracking-widest truncate">
                     📍 {tileName}
                 </div>
             )}
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                     <div
-                        className={`w-2 h-2 rounded-full ${player.inJail ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}
+                        className={`w-2 h-2 rounded-full ${player.inJail ? 'bg-terracotta animate-pulse' : 'bg-jade-400'}`}
                     />
                     <span
-                        className={`text-[10px] font-black uppercase tracking-widest ${player.inJail ? 'text-red-600' : 'text-emerald-600'}`}
+                        className={`text-[10px] font-black uppercase tracking-widest ${player.inJail ? 'text-terracotta' : 'text-jade-400'}`}
                     >
                         {player.inJail ? 'Đang trong tù' : 'Đang hoạt động'}
                     </span>
@@ -132,13 +133,13 @@ function PlayerCard({ player, isCurrent }: PlayerCardProps) {
                         role="status"
                         aria-label={`${player.name} đang suy nghĩ`}
                     >
-                        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce" />
+                        <span className="w-1.5 h-1.5 bg-gold-400 rounded-full animate-bounce" />
                         <span
-                            className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"
+                            className="w-1.5 h-1.5 bg-gold-400 rounded-full animate-bounce"
                             style={{ animationDelay: '-0.15s' }}
                         />
                         <span
-                            className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"
+                            className="w-1.5 h-1.5 bg-gold-400 rounded-full animate-bounce"
                             style={{ animationDelay: '-0.3s' }}
                         />
                     </div>
