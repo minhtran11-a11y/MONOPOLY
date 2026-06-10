@@ -88,7 +88,9 @@ const Settings = {
     }
 };
 
-window.Settings = Settings;
+window.Settings = Settings; // LEGACY-BRIDGE
 
 // Load immediately (before DOM ready, since localStorage is sync)
 Settings.load();
+
+export { Settings };

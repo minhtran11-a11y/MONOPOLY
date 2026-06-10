@@ -1,6 +1,5 @@
 // --- WEB VITALS + FPS MEASUREMENT ---
 // Logs LCP/CLS/INP/FCP to console. Optional on-screen HUD via ?debug=1 or Settings.
-(function () {
     const metrics = { LCP: null, CLS: 0, INP: null, FCP: null, FID: null, fps: 0 };
 
     function reportToConsole() {
@@ -12,7 +11,7 @@
             FPS:    metrics.fps
         };
         if (window._perfLogged) return;
-        window._perfLogged = true;
+        window._perfLogged = true; // LEGACY-BRIDGE
         // eslint-disable-next-line no-console
         console.info('[Web Vitals]', out);
     }
@@ -100,10 +99,13 @@
     }
 
     // Toggle helper for console
-    window.togglePerfHud = function () {
+    window.togglePerfHud = function () { // LEGACY-BRIDGE
         const on = isHudOn();
         try { localStorage.setItem('monopoly3d_perf_hud', on ? '0' : '1'); } catch (e) {}
         updateHUD();
     };
-    window.getPerfMetrics = function () { return { ...metrics }; };
-})();
+    window.getPerfMetrics = function () { return { ...metrics }; }; // LEGACY-BRIDGE
+
+// ESM exports — same function objects as the legacy window bridges above.
+export const togglePerfHud = window.togglePerfHud;
+export const getPerfMetrics = window.getPerfMetrics;

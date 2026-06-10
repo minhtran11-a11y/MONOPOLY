@@ -1,6 +1,5 @@
 // --- TOAST NOTIFICATIONS ---
 // Lightweight non-blocking feedback. Auto-stacks bottom-right (desktop) / bottom-center (mobile).
-(function () {
     const ROOT_ID = 'toast-root';
     const MAX_VISIBLE = 4;
     const DEFAULT_TTL = 3200;
@@ -55,7 +54,7 @@
         return dismiss;
     }
 
-    window.Toast = {
+    window.Toast = { // LEGACY-BRIDGE
         show,
         info:    (m, o) => show(m, { ...o, type: 'info' }),
         success: (m, o) => show(m, { ...o, type: 'success' }),
@@ -63,4 +62,5 @@
         error:   (m, o) => show(m, { ...o, type: 'error' }),
         money:   (m, o) => show(m, { ...o, type: 'money', icon: ICONS.money })
     };
-})();
+
+export const Toast = window.Toast;

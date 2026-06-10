@@ -436,14 +436,9 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script defer src="js/perf.js"></script>
-    <script defer src="js/settings.js"></script>
-    <script defer src="js/audio.js"></script>
-    <script defer src="js/toast.js"></script>
-    <script defer src="js/constants.js"></script>
-    <script defer src="js/utils.js"></script>
-    <script defer src="js/data.js"></script>
+    <!-- Scripts: ESM entry first (module + defer share the in-order after-parse list),
+         then the remaining classic scripts in their original order. -->
+    <script type="module" src="/src/main.js"></script>
     <script defer src="js/ui.js"></script>
     <script defer src="js/settings_ui.js"></script>
     <script defer src="js/tokens.js"></script>

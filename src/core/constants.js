@@ -35,3 +35,13 @@ const GAME_CONFIG = {
     JAIL_EXIT_FEE: 50,
     MAX_HOUSES: 5 // 5 means Hotel
 };
+
+if (typeof window !== 'undefined') {
+    window.TILE_TYPES = TILE_TYPES; // LEGACY-BRIDGE
+    window.COLORS = COLORS; // LEGACY-BRIDGE
+    window.PLAYER_COLORS = PLAYER_COLORS; // LEGACY-BRIDGE
+    window.PLAYER_HEX = PLAYER_HEX; // LEGACY-BRIDGE
+    window.GAME_CONFIG = GAME_CONFIG; // LEGACY-BRIDGE
+}
+
+export { TILE_TYPES, COLORS, PLAYER_COLORS, PLAYER_HEX, GAME_CONFIG };

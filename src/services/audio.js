@@ -113,7 +113,7 @@ function _stopBGM() {
     }, 600);
 }
 
-const SoundFX = {
+export const SoundFX = {
     playTone(frequency, type, duration, vol = 0.1) {
         _ensureGraph();
         if (!audioCtx) return;
@@ -189,7 +189,7 @@ const SoundFX = {
     setMuted(b)  { _config.muted  = !!b; _saveSettings(_config); _applyVolumes(); }
 };
 
-window.SoundFX = SoundFX;
+window.SoundFX = SoundFX; // LEGACY-BRIDGE
 
 // Unlock audio on first user interaction (browser autoplay policy)
 const _unlock = () => {

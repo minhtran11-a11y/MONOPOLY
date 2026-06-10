@@ -1,4 +1,4 @@
-const boardData = [
+export const boardData = [
     { id: 0, name: "BẮT ĐẦU", type: TILE_TYPES.START, color: COLORS.SPECIAL },
     { id: 1, name: "Đ. Nguyễn Huệ", type: TILE_TYPES.PROPERTY, price: 60, rent: 2, color: COLORS.BROWN, groupId: 1, houseCost: 50, houses: 0 },
     { id: 2, name: "Khí Vận", type: TILE_TYPES.CHEST, color: COLORS.SPECIAL },
@@ -42,4 +42,4 @@ const boardData = [
 ];
 
 boardData.forEach(tile => { if (tile.type === TILE_TYPES.PROPERTY || tile.type === TILE_TYPES.RAILROAD || tile.type === TILE_TYPES.UTILITY) tile.owner = null; });
-window.boardData = boardData;
+window.boardData = boardData; // LEGACY-BRIDGE

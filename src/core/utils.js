@@ -41,3 +41,10 @@ const Utils = {
     lerp,
     easeInOutCubic
 };
+
+export { Utils, sizeForTile };
+
+if (typeof window !== 'undefined') {
+    window.Utils = Utils; // LEGACY-BRIDGE
+    window.sizeForTile = sizeForTile; // LEGACY-BRIDGE
+}
