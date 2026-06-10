@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-// React plugin added in Phase D.
 export default defineConfig({
+  plugins: [react()],
   // host 127.0.0.1: Node on Windows resolves `localhost` to ::1 (IPv6 only),
   // but the verify_*.cjs harness targets http://127.0.0.1:8770.
   server: { host: '127.0.0.1', port: 8770, strictPort: true },

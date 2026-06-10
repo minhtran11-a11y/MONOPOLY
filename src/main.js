@@ -35,6 +35,8 @@ import './ui/trade.js';
 import './game/persistence.js';
 import './ui/menu.js';
 import './3d/scene-main.js';
+// React UI layer last — its window-facade overrides must win over legacy bridges.
+import './ui/react/main.tsx';
 
 // Lazy loaders — same window API the old CDN <script> injection exposed,
 // now backed by Vite-code-split dynamic imports. Flag semantics preserved
