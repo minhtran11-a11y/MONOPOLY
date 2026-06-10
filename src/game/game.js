@@ -1,4 +1,5 @@
 import { ctx3d } from '../3d/context.js';
+import { computeDestination, passedGo } from '../core/rules_core.ts';
 
 // --- GAME LOGIC ENGINE ---
 const Game = {
@@ -74,13 +75,8 @@ const Game = {
         if (getBuildableProperties(p.id).length > 0 && !p.inJail) buttons.push('build-menu');
 
         if (p.inJail) {
-            p.jailTurns++;
-            let msg = p.jailTurns > 3 ? "Bạn đã được tự do (nộp phạt $50)." : `Đang trong tù (Lượt ${p.jailTurns}/3). Đang tự động đổ xí ngầu...`;
-            if (p.jailTurns > 3) {
-                p.inJail = false; p.jailTurns = 0; p.money -= 50;
-            }
-            
-            showModal(`Lượt của ${p.name}`, msg, ['roll']);
+            // FIX-3: turn counting + fine live in the roll handler (shared with bots)
+            showModal(`Lượt của ${p.name}`, `Đang trong tù (Lượt ${p.jailTurns + 1}/3). Đang tự động đổ xí ngầu...`, ['roll']);
             
             // Auto-process jail turn for human to keep bot flow
             setTimeout(() => {
@@ -139,8 +135,11 @@ const Game = {
                         } else {
                             p.jailTurns++;
                             if (isDouble || p.jailTurns >= 3) {
+                                if (!isDouble) {
+                                    this.payMoney(p, 'bank', 50); // FIX-3: fine via payment pipeline
+                                    if (p.bankrupt) { setTimeout(() => Game.checkEndTurnPhase(false), 800); return; }
+                                }
                                 p.inJail = false; p.jailTurns = 0;
-                                if (!isDouble && p.money >= 50) p.money -= 50;
                                 logMsg(`🔓 NPC ${p.name} đã thoát tù (${isDouble ? 'đổ được đôi' : 'hết hạn'})!`);
                                 this.movePlayerAnim(p, total, isDouble);
                             } else {
@@ -172,9 +171,9 @@ const Game = {
     movePlayerAnim(player, steps, isDouble = false) {
         window.isAnimating = true; // LEGACY-BRIDGE
         let current = player.position;
-        let target = (current + steps) % 40;
+        let target = computeDestination(current, steps); // FIX-1: correct wrap for negative/zero steps
 
-        if (target < current) {
+        if (passedGo(current, steps)) { // FIX-1: GO salary only on forward wraps
             player.money += GAME_CONFIG.PASS_GO_MONEY;
             const goMsg = `💰 ${player.name} đi qua BẮT ĐẦU, nhận ${Utils.formatMoney(GAME_CONFIG.PASS_GO_MONEY)}.`;
             logMsg(goMsg);
@@ -185,7 +184,17 @@ const Game = {
 
         player.position = target;
         let path = [];
-        for (let i = 1; i <= steps; i++) path.push((current + i) % 40);
+        if (steps > 0) { // FIX-1: directional path (backward moves walk backward)
+            for (let i = 1; i <= steps; i++) path.push((current + i) % 40);
+        } else {
+            for (let i = 1; i <= -steps; i++) path.push(((current - i) % 40 + 40) % 40);
+        }
+
+        if (path.length === 0) { // FIX-1: zero-step move must not leave isAnimating stuck
+            window.isAnimating = false; // LEGACY-BRIDGE
+            this.handleSpaceLanded(player, target, isDouble);
+            return;
+        }
 
         path.forEach((tileIdx, i) => {
             setTimeout(() => {
@@ -338,11 +347,7 @@ const Game = {
         };
 
         const cards = isChance ? [
-            { msg: "Được bầu làm giám đốc sân bay Hà Nội. Lĩnh lương $500.", effect: (p) => { 
-                const airport = boardData[35];
-                if (airport.owner === null) airport.owner = p.id;
-                p.money += 500; Game.checkEndTurnPhase(isDouble);
-            }},
+            { msg: "Được bầu làm giám đốc sân bay Hà Nội. Lĩnh lương $500.", effect: (p) => moveToTile(p, 35, 500) }, // FIX-4: no silent ownership grant
             { msg: "Đến ô Ga Sài Gòn ngay lập tức.", effect: (p) => moveToTile(p, 5) },
             { msg: "Tự do đi tù (Chỉ ghé thăm).", effect: (p) => moveToTile(p, 10) },
             { msg: "Đến ô Công Ty Điện. Nếu đang ở đúng ô được lĩnh $5000.", effect: (p) => {
@@ -453,11 +458,13 @@ const Game = {
             this.handleLiquidation(fromPlayer, amount);
         }
         
-        fromPlayer.money -= amount;
-        if (toId !== 'bank') this.players[toId].money += amount;
+        // FIX-2: transfer only what the payer can raise; shortfall triggers bankruptcy.
+        const paid = Math.min(Math.max(fromPlayer.money, 0), amount);
+        fromPlayer.money -= paid;
+        if (toId !== 'bank') this.players[toId].money += paid;
         updatePlayerUI();
 
-        if (fromPlayer.money < 0) {
+        if (paid < amount) {
             this.handleBankruptcy(fromPlayer);
         }
     },
@@ -636,8 +643,18 @@ function _bindRollButton() {
                     p.inJail = false; p.jailTurns = 0;
                     Game.movePlayerAnim(p, total, false);
                 } else {
-                    logMsg(`🔒 ${p.name} không đổ được đôi. Tiếp tục ở lại tù.`);
-                    Game.checkEndTurnPhase(false);
+                    // FIX-3: unified jail counting — same semantics as the bot path
+                    p.jailTurns++;
+                    if (p.jailTurns >= 3) {
+                        Game.payMoney(p, 'bank', 50); // fine via pipeline (liquidation/bankruptcy apply)
+                        if (p.bankrupt) { Game.checkEndTurnPhase(false); return; }
+                        p.inJail = false; p.jailTurns = 0;
+                        logMsg(`🔓 ${p.name} đã nộp phạt $50 và thoát tù!`);
+                        Game.movePlayerAnim(p, total, false);
+                    } else {
+                        logMsg(`🔒 ${p.name} không đổ được đôi. Tiếp tục ở lại tù (Lượt ${p.jailTurns}/3).`);
+                        Game.checkEndTurnPhase(false);
+                    }
                 }
             } else {
                 Game.movePlayerAnim(p, total, isDouble);
