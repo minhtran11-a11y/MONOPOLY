@@ -16,16 +16,17 @@
  *                      install window._onlineSend (game.js ONLINE-MODE guards
  *                      route button presses through it), MenuManager.launchGame
  *                      (n, 'online'), then after the launch layer-swap window
- *                      GameSave.restoreInto(authoritative state) to materialize
- *                      positions/money/ownership in the 3D scene + panels.
+ *                      GameSync.initOnlineUi(authoritative state) to materialize
+ *                      positions/money/ownership in the 3D scene + panels and
+ *                      show the phase-driven turn modal.
  *
  * Error contract: lobbyStore.error and gameSync SendResult.code both surface
  * as "CODE — thông điệp" lines (codes stay machine-matchable).
  *
- * // TODO(ANIMATION-MAP): after boot, remote actions only update the HUD via
- * // gameSync.applyRemote (log lines + updatePlayerUI). Mapping authoritative
- * // events to 3D token movement / dice / modals is future work — see the
- * // seam comment in src/net/gameSync.ts.
+ * // TODO(ANIMATION-MAP): remote actions now drive dice + teleport sync + turn
+ * // modals (gameSync present/syncVisuals/driveTurnModal); per-event 3D
+ * // playback (token hop along MOVED.path, moneyFly, ...) is still future
+ * // work — see the seam comment in src/net/gameSync.ts.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -180,16 +181,16 @@ async function runOnlineBoot(closeOverlay: () => void): Promise<void> {
                 window.Toast?.show('SYNC_TIMEOUT — Chưa nhận được dữ liệu ván chơi', { type: 'error' });
                 return;
             }
-            // GameState is a strict superset of the persistence snapshot
-            // (types.ts header) — restoreInto repositions meshes, ownership,
-            // money and currentPlayerIndex in one pass.
-            window.GameSave?.restoreInto({ ...state, mode: 'online' });
+            // Unified online-UI bootstrap (gameSync owns it — same code path
+            // broadcasts use): binds online onclicks on the legacy modal
+            // buttons, materializes the snapshot (3D tokens/ownership/money
+            // via GameSave.restoreInto) and shows the first turn modal.
+            GameSync.initOnlineUi(state);
             syncOnlineIdentities(state);
             gameViewStore.getState().refreshFromWindow();
             window.logMsg?.(`🌐 Ván chơi online đã bắt đầu — đến lượt ${state.players[state.currentPlayerIndex]?.name ?? '???'}.`);
-            // TODO(ANIMATION-MAP): from here on, broadcasts land in
-            // gameSync.applyRemote (HUD-only). 3D playback of MOVED/BOUGHT/...
-            // events is the next milestone.
+            // TODO(ANIMATION-MAP): remote MOVED events still teleport (no
+            // token hop along event.path yet) — see gameSync.applyRemote.
         })();
     }, LAUNCH_LAYER_SWAP_MS + 200);
 }

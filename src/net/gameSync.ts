@@ -34,7 +34,15 @@ import {
 } from './supabaseClient.ts';
 import { applyAction, RuleViolation } from '../core/rules_core.ts';
 import { BOARD } from '../core/board.ts';
+import { lobbyStore } from '../store/lobbyStore.ts';
 import type { Action, CardDeck, GameEvent, GameState, TradeOffer } from '../core/types.ts';
+
+declare global {
+    interface Window {
+        /** src/3d/dice_anim.js LEGACY-BRIDGE (not yet declared in facade.ts). */
+        rollDiceAnimation?: (d1: number, d2: number, onDone: () => void) => void;
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -64,6 +72,8 @@ export interface SendResult {
     code?: string;
     /** Authoritative seq of the accepted action. */
     seq?: number;
+    /** Echo of the applied action (server-injected dice/cardIndex included). */
+    action?: Action;
     /** Events produced by the accepted action. */
     events?: GameEvent[];
     /** Authoritative post-action state. */
@@ -123,6 +133,7 @@ async function invokeGameAction(body: Record<string, unknown>): Promise<SendResu
     return {
         ok: true,
         seq: okBody.seq,
+        action: okBody.action,
         events: okBody.events ?? [],
         state: okBody.state,
     };
@@ -151,14 +162,14 @@ async function fetchState(): Promise<GameState | null> {
 }
 
 /**
- * Idempotent ingest of an authoritative (seq, events, state) triple. The same
- * action arrives twice (invoke response + own broadcast); the seq guard makes
- * the second arrival a no-op.
+ * Idempotent ingest of an authoritative (seq, action, events, state) tuple.
+ * The same action arrives twice (invoke response + own broadcast); the seq
+ * guard makes the second arrival a no-op.
  */
-function ingest(seq: number, events: GameEvent[], state: GameState): void {
+function ingest(seq: number, action: Action | undefined, events: GameEvent[], state: GameState): void {
     if (seq < expectedSeq) return; // already applied
     expectedSeq = seq + 1;
-    applyRemote(events, state);
+    present(action, events, state);
 }
 
 async function onActionBroadcast(payload: ActionBroadcastPayload): Promise<void> {
@@ -171,7 +182,7 @@ async function onActionBroadcast(payload: ActionBroadcastPayload): Promise<void>
         try {
             const result = applyAction(latestState, action);
             expectedSeq = seq + 1;
-            applyRemote(events, result.state);
+            present(action, events, result.state);
             return;
         } catch (e: unknown) {
             if (!(e instanceof RuleViolation)) throw e;
@@ -181,9 +192,10 @@ async function onActionBroadcast(payload: ActionBroadcastPayload): Promise<void>
 
     // Gap (missed broadcasts) or divergence: resync from the DB row. Events of
     // the skipped seqs are not re-logged — state correctness wins over log
-    // completeness here.
+    // completeness here. No dice animation either: the fetched state may be
+    // several actions ahead of the broadcast that triggered the resync.
     const state = await fetchState();
-    if (state) applyRemote(events, state);
+    if (state) present(undefined, events, state);
 }
 
 // ---------------------------------------------------------------------------
@@ -203,11 +215,14 @@ const tileName = (tileId: number): string => BOARD[tileId]?.name ?? `Ô ${tileId
  * the trivial events, then refreshes the legacy HUD.
  *
  * // TODO(ANIMATION-MAP): this is a SEAM, not the final presentation layer.
+ * // Implemented so far (see present()/syncVisuals()/driveTurnModal() below):
+ * //   ROLL dice animation (d1/d2 echoed in response + broadcast), teleport
+ * //   sync of tokens/ownership/houses via GameSave.restoreInto, and the
+ * //   phase-driven turn modal.
  * // Future mapping of events -> 3D visuals (replacing the plain log lines):
  * //   MOVED          -> Game.movePlayerAnim-equivalent token hop along
  * //                     event.path (the rules core already provides the full
- * //                     tile path + passedGo), preceded by rollDiceAnimation
- * //                     using the d1/d2 echoed in the broadcast ROLL action.
+ * //                     tile path + passedGo) instead of the teleport.
  * //   BOUGHT/BUILT   -> ownership strip + update3DHouses(tileId).
  * //   PAID           -> Anim3D.moneyFly between the two player meshes.
  * //   WENT_TO_JAIL   -> jail teleport + SoundFX.jail().
@@ -238,6 +253,9 @@ function applyRemote(events: GameEvent[], state: GameState): void {
                 window.logMsg?.(`🏡 ${owner} đã mua ${tileName(ev.tileId)}.`);
                 break;
             }
+            case 'CARD': // auto-drawn online (driveTurnModal) — surface the text
+                window.logMsg?.(`🃏 ${ev.deck === 'chance' ? 'Cơ Hội' : 'Khí Vận'}: ${ev.text}`);
+                break;
             case 'TURN_ENDED':
                 window.logMsg?.(`▶️ Đến lượt ${playerName(state, ev.nextPlayerId)}.`);
                 break;
@@ -252,6 +270,190 @@ function applyRemote(events: GameEvent[], state: GameState): void {
     }
 
     window.updatePlayerUI?.();
+}
+
+// ---------------------------------------------------------------------------
+// Presentation — 3D/panel sync + turn modal (the online UX driver)
+// ---------------------------------------------------------------------------
+
+/** Delay before auto-sending DRAW_CARD so "Đang rút thẻ..." is visible. */
+const AUTO_DRAW_DELAY_MS = 900;
+/** Pending auto-DRAW_CARD timer (one at a time; re-armed per driveTurnModal). */
+let autoDrawTimer: number | null = null;
+/** expectedSeq at the moment DRAW_CARD was auto-sent (prevents double-send). */
+let autoDrawSentForSeq = -1;
+
+/**
+ * Teleport-accurate materialization of an authoritative snapshot into the 3D
+ * scene + legacy panels: token positions, ownership strips, houses, money,
+ * currentPlayerIndex. Reuses GameSave.restoreInto (persistence.js) — GameState
+ * is a strict superset of the persistence snapshot.
+ *
+ * restoreInto unconditionally emits a "Đã khôi phục ván chơi" toast + log line
+ * (it was written for the save-file flow); those are suppressed here by
+ * temporarily clearing window.Toast/window.logMsg for the synchronous call —
+ * a live sync is not a save restore, and the spam would fire on EVERY action.
+ */
+function syncVisuals(state: GameState): void {
+    if ((window.players?.length ?? 0) === 0) return; // game not booted yet
+    const savedToast = window.Toast;
+    const savedLogMsg = window.logMsg;
+    // Cast: the ui.js expando assignment merges logMsg as a REQUIRED Window
+    // property, so plain `= undefined` does not typecheck despite facade.ts
+    // declaring it optional.
+    const mutableWindow = window as { Toast?: unknown; logMsg?: unknown };
+    try {
+        mutableWindow.Toast = undefined;
+        mutableWindow.logMsg = undefined;
+        window.GameSave?.restoreInto({ ...state, mode: 'online' });
+    } catch (e: unknown) {
+        console.error('[gameSync] restoreInto failed:', e);
+    } finally {
+        mutableWindow.Toast = savedToast;
+        mutableWindow.logMsg = savedLogMsg;
+    }
+    window.updatePlayerUI?.();
+}
+
+/**
+ * Shows the phase-appropriate action modal for the local seat.
+ *
+ * Matrix (me = state.currentPlayerIndex === lobbyStore.mySeat):
+ *   game_over            -> '🏆 KẾT THÚC' / '<winner> chiến thắng!'    []
+ *   !me (any phase)      -> 'Lượt của <name>' / 'Đang chờ đối thủ...'  []
+ *   me & await_roll      -> 'Lượt của bạn'    / roll prompt            ['roll']
+ *   me & await_buy_..    -> 'Mua đất?'        / '<tile> — giá <price>' ['buy','skip']
+ *   me & await_card      -> 'Rút thẻ'         / 'Đang rút thẻ...'      []  + AUTO-SEND
+ *   me & await_end       -> 'Lượt đã xong'    / end prompt             ['end']
+ *
+ * await_card AUTO-SEND: there is no legacy 'draw' button (ModalButtonKind is
+ * roll|buy|skip|end|build-menu and ui.js resets exactly those ids), and the
+ * server picks the cardIndex anyway — so DRAW_CARD is sent automatically
+ * after AUTO_DRAW_DELAY_MS while a button-less waiting modal shows. The
+ * (timer, sent-seq) pair makes re-presentations of the same state (boot +
+ * broadcast + resync) fire the send exactly once.
+ *
+ * Goes through window.showModal (the ActionModal facade override), which also
+ * syncs the legacy #btn-* hidden classes — keyboard shortcuts keep working.
+ */
+function driveTurnModal(state: GameState): void {
+    if ((window.players?.length ?? 0) === 0) return; // game not booted yet
+
+    if (autoDrawTimer !== null) {
+        window.clearTimeout(autoDrawTimer);
+        autoDrawTimer = null;
+    }
+
+    if (state.phase === 'game_over') {
+        const winnerName =
+            typeof state.winner === 'number' ? (state.players[state.winner]?.name ?? '') : '';
+        window.showModal?.('🏆 KẾT THÚC', `${winnerName} chiến thắng!`.trim(), []);
+        return;
+    }
+
+    const mySeat = lobbyStore.getState().mySeat;
+    const me = mySeat !== null && state.currentPlayerIndex === mySeat;
+    const current = state.players[state.currentPlayerIndex];
+
+    if (!me) {
+        window.showModal?.(`Lượt của ${current?.name ?? '?'}`, 'Đang chờ đối thủ...', []);
+        return;
+    }
+
+    switch (state.phase) {
+        case 'await_roll':
+            window.showModal?.(
+                'Lượt của bạn',
+                current?.inJail
+                    ? 'Bạn đang ở tù — đổ xúc xắc để thử thoát.'
+                    : 'Mời bạn đổ xúc xắc để di chuyển.',
+                ['roll'],
+            );
+            break;
+        case 'await_buy_decision': {
+            const pos = current?.position ?? 0;
+            const def = BOARD[pos];
+            window.showModal?.(
+                'Mua đất?',
+                `${def?.name ?? `Ô ${pos}`} — giá ${formatMoney(def?.price ?? 0)}`,
+                ['buy', 'skip'],
+            );
+            break;
+        }
+        case 'await_card':
+            window.showModal?.('Rút thẻ', 'Bạn dừng ở ô thẻ — đang rút thẻ...', []);
+            if (autoDrawSentForSeq !== expectedSeq) {
+                autoDrawTimer = window.setTimeout(() => {
+                    autoDrawTimer = null;
+                    autoDrawSentForSeq = expectedSeq;
+                    window._onlineSend?.({ type: 'DRAW_CARD' });
+                }, AUTO_DRAW_DELAY_MS);
+            }
+            break;
+        case 'await_end':
+            window.showModal?.('Lượt đã xong', 'Kết thúc lượt của bạn.', ['end']);
+            break;
+    }
+}
+
+/**
+ * SINGLE presentation entry for every applied action: own sendAction
+ * responses, in-order broadcasts, and resyncs all land here.
+ *
+ * ROLL actions (own response AND others' broadcasts both echo d1/d2) play the
+ * shared dice animation first so every client SEES the dice, then sync; an
+ * animation failure must never block state sync (try/catch -> direct sync).
+ */
+function present(action: Action | undefined, events: GameEvent[], state: GameState): void {
+    applyRemote(events, state);
+    const finish = (): void => {
+        // Re-read latestState: another action may have been applied while the
+        // dice animation played — never re-sync to a stale closure snapshot.
+        const newest = latestState ?? state;
+        syncVisuals(newest);
+        driveTurnModal(newest);
+    };
+    if (
+        action?.type === 'ROLL' &&
+        typeof window.rollDiceAnimation === 'function' &&
+        !window.isAnimating &&
+        (window.players?.length ?? 0) > 0
+    ) {
+        try {
+            window.SoundFX?.roll();
+            window.rollDiceAnimation(action.d1, action.d2, finish);
+            return;
+        } catch (e: unknown) {
+            console.error('[gameSync] dice animation failed, syncing directly:', e);
+            window.isAnimating = false; // dice_anim sets it before it can throw
+        }
+    }
+    finish();
+}
+
+/**
+ * Online mode never runs landOnTile/checkEndTurnPhase, so the legacy
+ * #btn-buy/#btn-skip/#btn-end nodes (which the React ActionModal proxy-clicks)
+ * have NO onclick on a fresh page. Bind them straight to the _onlineSend hook
+ * (BUY's tileId is resolved by the hook). #btn-roll is NOT touched: game.js
+ * _bindRollButton already routes it online and owns the solo behavior.
+ * Solo games rebind these onclicks in landOnTile/checkEndTurnPhase, and the
+ * _gameMode guard makes these handlers inert outside online mode.
+ */
+function bindOnlineModalButtons(): void {
+    const bindings: ReadonlyArray<[string, () => void]> = [
+        ['btn-buy', () => window._onlineSend?.({ type: 'BUY' })],
+        ['btn-skip', () => window._onlineSend?.({ type: 'SKIP_BUY' })],
+        ['btn-end', () => window._onlineSend?.({ type: 'END_TURN' })],
+    ];
+    for (const [id, send] of bindings) {
+        const btn = document.getElementById(id);
+        if (!btn) continue;
+        btn.onclick = () => {
+            if (window._gameMode !== 'online') return;
+            send();
+        };
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -287,7 +489,29 @@ function connect(roomId: string): void {
     channel.on('broadcast', { event: 'action' }, (msg) => {
         void onActionBroadcast(msg.payload as ActionBroadcastPayload);
     });
-    joinRoomChannel(roomId, () => { void fetchState(); });
+    joinRoomChannel(roomId, () => {
+        // (Re)joined: seed/refresh from the DB row. Pre-boot this only stores
+        // state (syncVisuals/driveTurnModal no-op until window.players exists;
+        // initOnlineUi covers the boot); post-reconnect it heals the UI.
+        void fetchState().then((state) => {
+            if (state) {
+                syncVisuals(state);
+                driveTurnModal(state);
+            }
+        });
+    });
+}
+
+/**
+ * Unified online-UI bootstrap, called by the MenuScreens online boot AFTER
+ * Game.init has built players/meshes and the authoritative state arrived:
+ * binds the online onclick handlers of the legacy modal buttons, materializes
+ * the snapshot into the 3D scene/panels, and shows the first turn modal.
+ */
+function initOnlineUi(state: GameState): void {
+    bindOnlineModalButtons();
+    syncVisuals(state);
+    driveTurnModal(state);
 }
 
 /**
@@ -299,7 +523,7 @@ async function sendAction(action: ClientAction): Promise<SendResult> {
     if (!currentRoomId) return { ok: false, code: 'NOT_CONNECTED' };
     const res = await invokeGameAction({ roomId: currentRoomId, action });
     if (res.ok && res.state && typeof res.seq === 'number') {
-        ingest(res.seq, res.events ?? [], res.state);
+        ingest(res.seq, res.action, res.events ?? [], res.state);
     }
     return res;
 }
@@ -312,6 +536,11 @@ function disconnect(): void {
     currentRoomId = null;
     latestState = null;
     expectedSeq = 0;
+    autoDrawSentForSeq = -1;
+    if (autoDrawTimer !== null) {
+        window.clearTimeout(autoDrawTimer);
+        autoDrawTimer = null;
+    }
 }
 
 /** Latest authoritative state (null before connect/start completes). */
@@ -322,6 +551,7 @@ function getLatestState(): GameState | null {
 export const GameSync = {
     startOnlineGame,
     connect,
+    initOnlineUi,
     sendAction,
     disconnect,
     getLatestState,
