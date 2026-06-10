@@ -64,8 +64,8 @@
                         <p class="text-slate-400 text-sm font-bold uppercase tracking-widest">Đấu với máy (NPC)</p>
                     </div>
                 </button>
-                <div id="mode-online-maintenance" class="glass-panel p-12 flex flex-col items-center gap-6 opacity-60 cursor-not-allowed border-rose-500/30 relative overflow-hidden grayscale">
-                    <div class="absolute top-4 right-4 bg-rose-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg animate-pulse">Bảo trì</div>
+                <div id="mode-online-trigger" class="glass-panel p-12 flex flex-col items-center gap-6 opacity-60 cursor-not-allowed border-rose-500/30 relative overflow-hidden grayscale">
+                    <div class="absolute top-4 right-4 bg-rose-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg animate-pulse">SẮP RA MẮT</div>
                     <div class="w-24 h-24 bg-rose-500/10 rounded-3xl flex items-center justify-center text-5xl">🌐</div>
                     <div class="text-center">
                         <h3 class="text-2xl font-black text-white uppercase mb-2">ONLINE</h3>
@@ -96,141 +96,6 @@
             <div class="flex justify-center mt-12"><button class="back-to-modes text-slate-500 hover:text-white font-black uppercase text-xs tracking-widest">← Quay lại</button></div>
         </div>
 
-        <!-- 4. Auth Screen -->
-        <div id="screen-auth" class="menu-screen hidden relative z-10 w-full max-w-md glass-panel p-10 flex flex-col gap-6">
-            <div class="text-center">
-                <h2 id="auth-title" class="text-3xl font-black text-white uppercase italic mb-2">Đăng nhập</h2>
-                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Yêu cầu để chơi Online</p>
-            </div>
-            
-            <!-- Tab Buttons -->
-            <div class="flex gap-2 bg-white/5 rounded-xl p-1">
-                <button id="tab-login" class="flex-1 py-3 rounded-lg font-black text-sm uppercase tracking-widest transition-all bg-rose-600 text-white" onclick="switchAuthTab('login')">Đăng nhập</button>
-                <button id="tab-register" class="flex-1 py-3 rounded-lg font-black text-sm uppercase tracking-widest transition-all text-slate-400 hover:text-white" onclick="switchAuthTab('register')">Đăng ký</button>
-            </div>
-
-            <!-- Login Form -->
-            <div id="form-login" class="space-y-4">
-                <input id="login-username" type="text" placeholder="Tên đăng nhập" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-rose-500 transition-colors">
-                <input id="login-password" type="password" placeholder="Mật khẩu" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-rose-500 transition-colors">
-                <p id="login-error" class="text-red-400 text-xs font-bold hidden"></p>
-                <button id="btn-login-confirm" class="w-full py-5 bg-rose-600 hover:bg-rose-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg">Đăng nhập</button>
-            </div>
-
-            <!-- Register Form -->
-            <div id="form-register" class="space-y-4 hidden">
-                <input id="reg-username" type="text" placeholder="Tên đăng nhập (ít nhất 3 ký tự)" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-emerald-500 transition-colors">
-                <input id="reg-password" type="password" placeholder="Mật khẩu (ít nhất 4 ký tự)" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-emerald-500 transition-colors">
-                <input id="reg-password-confirm" type="password" placeholder="Xác nhận mật khẩu" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-emerald-500 transition-colors">
-                <p id="reg-error" class="text-red-400 text-xs font-bold hidden"></p>
-                <p id="reg-success" class="text-emerald-400 text-xs font-bold hidden"></p>
-                <button id="btn-register-confirm" class="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg">Đăng ký tài khoản</button>
-            </div>
-
-            <button class="back-to-modes text-slate-500 hover:text-white font-black uppercase text-xs tracking-widest text-center">← Quay lại</button>
-        </div>
-
-        <!-- 5. Online Selection -->
-        <div id="screen-online-detail" class="menu-screen hidden relative z-10 w-full max-w-5xl px-8 flex flex-col items-center">
-            <h2 class="text-4xl font-black text-white mb-10 uppercase italic tracking-widest text-center">Phòng chờ Online</h2>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 w-full">
-                <!-- Left: Create Room -->
-                <div class="glass-panel p-10 flex flex-col gap-6">
-                    <h3 class="text-2xl font-black text-indigo-500 uppercase italic">Tạo phòng mới</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Tên phòng hiển thị</label>
-                            <input id="room-name-input" type="text" placeholder="Ví dụ: Hà Nội Phố" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors">
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Số lượng người chơi</label>
-                                <div class="flex gap-2 bg-white/5 rounded-xl p-1">
-                                    <button onclick="selectPlayerLimit(2)" class="player-limit-btn flex-1 py-3 rounded-lg font-black text-sm transition-all bg-indigo-600 text-white" data-limit="2">2 Người</button>
-                                    <button onclick="selectPlayerLimit(3)" class="player-limit-btn flex-1 py-3 rounded-lg font-black text-sm transition-all text-slate-400 hover:text-white" data-limit="3">3 Người</button>
-                                    <button onclick="selectPlayerLimit(4)" class="player-limit-btn flex-1 py-3 rounded-lg font-black text-sm transition-all text-slate-400 hover:text-white" data-limit="4">4 Người</button>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Mật mã (Nếu riêng tư)</label>
-                                <input id="room-pass-input" type="password" placeholder="Để trống nếu công khai" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Chế độ phòng</label>
-                            <div class="flex gap-2 bg-white/5 rounded-xl p-1">
-                                <button id="room-type-public" onclick="selectRoomType('public')" class="room-type-btn flex-1 py-3 rounded-lg font-black text-sm transition-all bg-emerald-600 text-white">Công khai</button>
-                                <button id="room-type-private" onclick="selectRoomType('private')" class="room-type-btn flex-1 py-3 rounded-lg font-black text-sm transition-all text-slate-400 hover:text-white">Riêng tư</button>
-                            </div>
-                        </div>
-                    </div>
-                    <button onclick="handleCreateRoom()" class="w-full py-5 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg mt-4">Tạo phòng ngay</button>
-                </div>
-
-                <!-- Right: Quick Join / Public Rooms -->
-                <div class="glass-panel p-10 flex flex-col gap-6">
-                    <h3 class="text-2xl font-black text-rose-500 uppercase italic">Vào phòng có sẵn</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Nhập mã phòng để vào</label>
-                            <div class="flex gap-2">
-                                <input id="join-room-input" type="text" placeholder="Nhập mã..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-rose-500 transition-colors">
-                                <button onclick="handleJoinRoom()" class="px-8 bg-rose-600 hover:bg-rose-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg">Vào</button>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-4 pt-4 border-t border-white/10">
-                            <div class="flex justify-between items-center mb-4">
-                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Phòng công khai đang chờ...</label>
-                                <button onclick="handleRefreshRooms()" class="text-indigo-400 hover:text-white transition-all text-sm flex items-center gap-1 group">
-                                    <span id="refresh-icon" class="inline-block group-active:rotate-180 transition-transform duration-300">🔄</span>
-                                    <span class="text-[8px] font-black uppercase">Làm mới</span>
-                                </button>
-                            </div>
-                            <div id="public-rooms-list" class="space-y-2">
-                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-4 italic">Hiện không có phòng công khai nào...</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="flex justify-center mt-10"><button class="back-to-modes text-slate-500 hover:text-white font-black uppercase text-xs tracking-widest">← Quay lại</button></div>
-        </div>
-
-        <!-- 6. Online Waiting Lobby -->
-        <div id="screen-online-lobby" class="menu-screen hidden relative z-10 w-full max-w-4xl px-8 flex flex-col items-center">
-            <div class="glass-panel p-10 w-full flex flex-col gap-8">
-                <div class="flex justify-between items-start border-b border-white/10 pb-6">
-                    <div>
-                        <h2 id="lobby-room-name" class="text-3xl font-black text-white uppercase italic tracking-widest">PHÒNG: BANBE123</h2>
-                        <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mt-1">Chủ phòng: Bạn</p>
-                    </div>
-                    <div class="bg-indigo-600/10 px-6 py-3 rounded-2xl border border-indigo-500/30 flex items-center gap-3">
-                        <div class="flex -space-x-2">
-                            <div class="w-6 h-6 rounded-full bg-indigo-500 border-2 border-slate-900"></div>
-                            <div class="w-6 h-6 rounded-full bg-slate-700 border-2 border-slate-900"></div>
-                            <div class="w-6 h-6 rounded-full bg-slate-700 border-2 border-slate-900"></div>
-                        </div>
-                        <span id="lobby-count" class="text-indigo-400 font-black text-lg">1/4</span>
-                        <span class="text-[10px] text-white/50 font-black uppercase tracking-widest">Đang chờ</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Sơ đồ vị trí người chơi</label>
-                    <div id="lobby-players-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Slots will be injected here -->
-                    </div>
-                </div>
-
-                <div class="flex gap-4 mt-4">
-                    <button onclick="leaveLobby()" class="flex-1 py-5 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-black uppercase tracking-widest rounded-xl transition-all border border-white/10">Thoát phòng</button>
-                    <button id="btn-start-lobby" onclick="startOnlineFromLobby()" class="flex-[2] py-5 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-indigo-600/20 opacity-50 pointer-events-none">ĐANG ĐỢI NGƯỜI CHƠI...</button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Layer 2: In-Game HUD -->
