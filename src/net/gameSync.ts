@@ -521,9 +521,17 @@ function initOnlineUi(state: GameState): void {
  */
 async function sendAction(action: ClientAction): Promise<SendResult> {
     if (!currentRoomId) return { ok: false, code: 'NOT_CONNECTED' };
+    // Optimistically hide the turn modal: the server round-trip plus the dice
+    // animation would otherwise leave the stale prompt covering the board
+    // (and invite double-clicks) until present() shows the next-phase modal.
+    window.hideModal?.();
     const res = await invokeGameAction({ roomId: currentRoomId, action });
     if (res.ok && res.state && typeof res.seq === 'number') {
         ingest(res.seq, res.action, res.events ?? [], res.state);
+    } else if (latestState) {
+        // Send rejected (NOT_YOUR_TURN, WRONG_PHASE, ...) — bring back the
+        // modal that matches the authoritative state we already hold.
+        driveTurnModal(latestState);
     }
     return res;
 }
