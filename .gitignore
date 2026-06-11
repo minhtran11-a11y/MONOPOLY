@@ -9,6 +9,9 @@ coverage/
 .env
 .env.*
 !.env.example
+# .env.production is committed on purpose: it carries only the public-by-design
+# Supabase URL + anon key that ship inside the client bundle anyway (RLS protects data).
+!.env.production
 
 # Generated reports & test artifacts
 lighthouse-report.json
