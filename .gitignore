@@ -34,3 +34,5 @@ Desktop.ini
 
 # GAN harness screenshots (regenerable artifacts)
 gan-harness/shots/
+
+.vercel
