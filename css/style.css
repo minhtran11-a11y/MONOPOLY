@@ -640,6 +640,43 @@ body.reduced-motion .drum-watermark svg { animation: none !important; }
 }
 
 /* ============================================================
+   DICE ANNOUNCEMENT STRIP (created + managed by dice_anim.js)
+   ============================================================ */
+.dice-strip {
+    position: fixed;
+    left: 50%;
+    bottom: 6.5rem;
+    transform: translate(-50%, 18px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1100; /* above HUD, below toasts (1200) */
+    background: var(--panel-grad);
+    border: 1px solid var(--panel-hairline);
+    box-shadow: var(--shadow-lac), inset 0 1px 0 var(--panel-sheen);
+    border-radius: 999px;
+    padding: 0.45rem 1.4rem;
+    font-family: 'Playfair Display', 'Be Vietnam Pro', serif;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    color: var(--gold-300);
+    white-space: nowrap;
+    transition: transform var(--d-norm) var(--ease-lac), opacity var(--d-norm) var(--ease-lac);
+}
+.dice-strip-in {
+    transform: translate(-50%, 0);
+    opacity: 1;
+}
+@media (max-width: 767px) {
+    .dice-strip { bottom: 8.5rem; font-size: 0.85rem; padding: 0.4rem 1.1rem; }
+}
+/* Reduced motion: keep the strip (info), drop the slide — fade only */
+body.reduced-motion .dice-strip {
+    transform: translate(-50%, 0);
+    transition: opacity var(--d-norm);
+}
+
+/* ============================================================
    ACCESSIBILITY HELPERS
    ============================================================ */
 

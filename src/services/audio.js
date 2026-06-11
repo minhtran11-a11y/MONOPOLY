@@ -113,6 +113,19 @@ function _stopBGM() {
     }, 600);
 }
 
+// Shared 60ms white-noise buffer for the woody dice click (created lazily once)
+let _noiseBuf = null;
+function _getNoiseBuf() {
+    if (!audioCtx) return null;
+    if (!_noiseBuf) {
+        const len = Math.floor(audioCtx.sampleRate * 0.06);
+        _noiseBuf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+        const data = _noiseBuf.getChannelData(0);
+        for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    }
+    return _noiseBuf;
+}
+
 export const SoundFX = {
     playTone(frequency, type, duration, vol = 0.1) {
         _ensureGraph();
@@ -175,6 +188,68 @@ export const SoundFX = {
 
     alert() { this.playTone(800, 'square', 0.2, 0.1); },
     click() { this.playTone(700, 'sine', 0.05, 0.1); },
+
+    // Short woody click for dice impacts. force01 in [0,1] scales pitch + volume.
+    // Bandpass-filtered noise burst (the "knock") + low triangle thump (the body).
+    diceClick(force01 = 0.5) {
+        _ensureGraph();
+        if (!audioCtx) return;
+        _resumeCtx();
+        const f = Math.max(0, Math.min(1, force01));
+        const now = audioCtx.currentTime;
+
+        const buf = _getNoiseBuf();
+        if (buf) {
+            const src = audioCtx.createBufferSource();
+            src.buffer = buf;
+            const bp = audioCtx.createBiquadFilter();
+            bp.type = 'bandpass';
+            bp.frequency.value = 1400 + f * 1400; // harder hit → brighter knock
+            bp.Q.value = 7;                        // woody resonance
+            const g = audioCtx.createGain();
+            const peak = 0.05 + f * 0.22;
+            g.gain.setValueAtTime(peak, now);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 0.03 + f * 0.03);
+            src.connect(bp).connect(g).connect(_sfxGain);
+            src.start(now);
+            src.stop(now + 0.07);
+        }
+
+        const osc = audioCtx.createOscillator();
+        const og = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(180 + f * 140, now);
+        og.gain.setValueAtTime((0.05 + f * 0.22) * 0.5, now);
+        og.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+        osc.connect(og).connect(_sfxGain);
+        osc.start(now);
+        osc.stop(now + 0.05);
+    },
+
+    // Warm two-partial wooden chime when the dice settle (~350ms decay).
+    // Deliberately soft — a lacquer-box close, NOT a casino ding.
+    diceSettle() {
+        _ensureGraph();
+        if (!audioCtx) return;
+        _resumeCtx();
+        const now = audioCtx.currentTime;
+        const partials = [
+            { type: 'sine',     freq: 329.63, vol: 0.16,  delay: 0    }, // E4 — warm fundamental
+            { type: 'triangle', freq: 493.88, vol: 0.085, delay: 0.02 }  // B4 — soft fifth shimmer
+        ];
+        partials.forEach(p => {
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = p.type;
+            osc.frequency.setValueAtTime(p.freq, now + p.delay);
+            g.gain.setValueAtTime(0.0001, now + p.delay);
+            g.gain.exponentialRampToValueAtTime(p.vol, now + p.delay + 0.015);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + p.delay + 0.35);
+            osc.connect(g).connect(_sfxGain);
+            osc.start(now + p.delay);
+            osc.stop(now + p.delay + 0.4);
+        });
+    },
 
     // --- BGM control ---
     startBGM() { _startBGM(); },

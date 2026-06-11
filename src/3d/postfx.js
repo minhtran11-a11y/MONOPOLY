@@ -55,5 +55,33 @@ function initPostProcessing() {
     }
 }
 
-export { initPostProcessing };
+// --- FOCUS VIGNETTE PULSE (dice rolls) ---
+// Eases the vignette darkness up ~18% over 300ms while a physics roll is in
+// flight, restores it over 400ms at reveal. No-ops cleanly when the composer/
+// vignette pass is absent (low tier) or under reduced motion.
+const VIGNETTE_BASE_DARKNESS = VignetteShader.uniforms.darkness.value;
+const VIGNETTE_PULSE_FACTOR = 1.18;
+let _vigAnimId = null;
+
+function pulseVignette(on) {
+    const pass = window._vignettePass;
+    if (!pass || !pass.uniforms || !pass.uniforms.darkness) return;
+    if (window.Settings && window.Settings.isReducedMotion()) return;
+    const uniform = pass.uniforms.darkness;
+    const from = uniform.value;
+    const to = on ? VIGNETTE_BASE_DARKNESS * VIGNETTE_PULSE_FACTOR : VIGNETTE_BASE_DARKNESS;
+    const dur = on ? 300 : 400;
+    if (_vigAnimId !== null) cancelAnimationFrame(_vigAnimId);
+    const t0 = performance.now();
+    function tick(now) {
+        const t = Math.min(1, (now - t0) / dur);
+        const ease = t * (2 - t); // easeOutQuad
+        uniform.value = from + (to - from) * ease;
+        _vigAnimId = t < 1 ? requestAnimationFrame(tick) : null;
+    }
+    _vigAnimId = requestAnimationFrame(tick);
+}
+
+export { initPostProcessing, pulseVignette };
 window.initPostProcessing = initPostProcessing; // LEGACY-BRIDGE
+window.PostFX = { pulseVignette }; // LEGACY-BRIDGE

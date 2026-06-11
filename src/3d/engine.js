@@ -403,11 +403,21 @@ function createDecks() {
 
 function createDice() {
     const diceGeo = new THREE.BoxGeometry(2.8, 2.8, 2.8);
-    const getDiceMats = (num) => {
+    // SƠN MÀI dice: aged-bone ivory body, engraved pips, gold hairline borders.
+    // Slight warm emissive fakes a lacquer sheen without an envMap (perf-sane);
+    // dice_physics pulses emissive gold on reveal and restores these exact values.
+    const makeDiceMat = (num) => new THREE.MeshStandardMaterial({
+        map: createDiceTexture(num),
+        roughness: 0.32,
+        metalness: 0.05,
+        emissive: 0x0a0805,
+        emissiveIntensity: 0.35
+    });
+    const getDiceMats = () => {
         return [
-            new THREE.MeshStandardMaterial({ map: createDiceTexture(2) }), new THREE.MeshStandardMaterial({ map: createDiceTexture(5) }),
-            new THREE.MeshStandardMaterial({ map: createDiceTexture(1) }), new THREE.MeshStandardMaterial({ map: createDiceTexture(6) }),
-            new THREE.MeshStandardMaterial({ map: createDiceTexture(3) }), new THREE.MeshStandardMaterial({ map: createDiceTexture(4) })
+            makeDiceMat(2), makeDiceMat(5),
+            makeDiceMat(1), makeDiceMat(6),
+            makeDiceMat(3), makeDiceMat(4)
         ];
     };
     
@@ -418,26 +428,72 @@ function createDice() {
     ctx3d.dice2.position.set(3, 10, 0); ctx3d.dice2.castShadow = true; ctx3d.dice2.visible = false; ctx3d.scene.add(ctx3d.dice2);
 }
 
+// SƠN MÀI dice face — aged-bone ivory, ENGRAVED pips, gold hairline border.
+// Faces 1 & 4 carry sơn-red pips (East Asian tradition); the rest lacquer black.
+// RoundedBoxGeometry does not exist in three r128 — the corner bevel is faked
+// with a darker gradient frame baked into the texture rim (BoxGeometry stays).
 function createDiceTexture(number) {
-    const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
+    const S = 256;
+    const canvas = document.createElement('canvas'); canvas.width = S; canvas.height = S;
     const ctx = canvas.getContext('2d');
-    
-    // Dice Body
-    ctx.fillStyle = '#ffffff'; 
-    ctx.roundRect ? ctx.roundRect(0, 0, 256, 256, 40) : ctx.fillRect(0, 0, 256, 256);
-    ctx.fill();
-    
-    // Dots
-    ctx.fillStyle = '#1e293b';
-    const drawDot = (x, y) => { ctx.beginPath(); ctx.arc(x, y, 25, 0, Math.PI * 2); ctx.fill(); };
-    
-    const center = 128, low = 64, high = 192;
-    if([1,3,5].includes(number)) drawDot(center, center);
-    if([2,3,4,5,6].includes(number)) { drawDot(low, low); drawDot(high, high); }
-    if([4,5,6].includes(number)) { drawDot(high, low); drawDot(low, high); }
-    if(number === 6) { drawDot(low, center); drawDot(high, center); }
 
-    return new THREE.CanvasTexture(canvas);
+    // Body: ivory bone with a soft warm falloff toward the edges (aged look)
+    const body = ctx.createRadialGradient(S / 2, S / 2, S * 0.15, S / 2, S / 2, S * 0.72);
+    body.addColorStop(0, '#F7F1DF');
+    body.addColorStop(0.65, '#F4ECD8');
+    body.addColorStop(1, '#E6D9BC');
+    ctx.fillStyle = body;
+    ctx.fillRect(0, 0, S, S);
+
+    // Fake corner bevel: subtle darker frame at the texture rim (multiply)
+    const rim = ctx.createRadialGradient(S / 2, S / 2, S * 0.42, S / 2, S / 2, S * 0.74);
+    rim.addColorStop(0, 'rgba(0,0,0,0)');
+    rim.addColorStop(0.75, 'rgba(74,52,30,0.10)');
+    rim.addColorStop(1, 'rgba(58,38,20,0.38)');
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = rim;
+    ctx.fillRect(0, 0, S, S);
+    ctx.globalCompositeOperation = 'source-over';
+
+    // Gold hairline border, inset around the face edge
+    ctx.strokeStyle = '#D4A94E';
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(11, 11, S - 22, S - 22);
+
+    // Engraved pips: dished radial gradient (dark center), inner shadow ring,
+    // and a thin catch-light on the lower rim — light reads as coming from above.
+    const isRedFace = (number === 1 || number === 4);
+    const pipEdge = isRedFace ? '#8A1A1A' : '#1A0E10';
+    const pipCore = isRedFace ? '#5C0F0F' : '#070304';
+    const R = 24;
+    const drawPip = (x, y) => {
+        const dish = ctx.createRadialGradient(x, y, R * 0.1, x, y, R);
+        dish.addColorStop(0, pipCore);
+        dish.addColorStop(0.7, pipEdge);
+        dish.addColorStop(1, pipEdge);
+        ctx.fillStyle = dish;
+        ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
+
+        // Inner shadow ring — the engraving lip
+        ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(x, y, R - 1.5, 0, Math.PI * 2); ctx.stroke();
+
+        // Catch-light on the lower outer rim (canvas angle 0..PI = bottom half)
+        ctx.strokeStyle = 'rgba(250,243,224,0.5)';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.arc(x, y, R + 1.2, Math.PI * 0.12, Math.PI * 0.88); ctx.stroke();
+    };
+
+    const center = 128, low = 64, high = 192;
+    if ([1, 3, 5].includes(number)) drawPip(center, center);
+    if ([2, 3, 4, 5, 6].includes(number)) { drawPip(low, low); drawPip(high, high); }
+    if ([4, 5, 6].includes(number)) { drawPip(high, low); drawPip(low, high); }
+    if (number === 6) { drawPip(low, center); drawPip(high, center); }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.anisotropy = ctx3d.maxAnisotropy;
+    return texture;
 }
 
 function createBuilding(isHotel) {

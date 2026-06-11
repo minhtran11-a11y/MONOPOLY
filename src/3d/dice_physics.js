@@ -8,6 +8,15 @@
     let initialized = false;
     let scriptLoaded = false;
 
+    // Collision-audio state (listeners added ONCE in initWorld, active only
+    // while a roll is in flight)
+    let rollInFlight = false;
+    let collideHooked = false;
+    let hadTableContact = false;
+    const lastClickAt = [0, 0]; // per-die click throttle (>=70ms apart)
+    const CLICK_THROTTLE_MS = 70;
+    const IMPACT_NORM = 12;     // |impact velocity| that maps to force01 = 1
+
     // cannon-es npm package (ESM) — loaded on demand via dynamic import().
     let CANNON = null;
 
@@ -77,7 +86,36 @@
             return body;
         });
 
+        hookCollisionAudio();
         initialized = true;
+    }
+
+    // Woody clicks scaled by impact force, throttled per die. First table
+    // contact of each roll fires a light haptic. Guarded against double-add.
+    function hookCollisionAudio() {
+        if (collideHooked) return;
+        collideHooked = true;
+        bodies.forEach((b, i) => {
+            b.addEventListener('collide', (e) => {
+                if (!rollInFlight) return;
+                let impact = 0;
+                try {
+                    impact = Math.abs(e.contact.getImpactVelocityAlongNormal());
+                } catch (err) {
+                    impact = b.velocity.length(); // older cannon builds: approximate
+                }
+                const force = Math.min(1, impact / IMPACT_NORM);
+                if (e.body === ground && !hadTableContact) {
+                    hadTableContact = true;
+                    if (window.Settings && window.Settings.haptic) window.Settings.haptic(15);
+                }
+                if (force < 0.04) return; // ignore resting micro-contacts
+                const now = performance.now();
+                if (now - lastClickAt[i] < CLICK_THROTTLE_MS) return;
+                lastClickAt[i] = now;
+                if (window.SoundFX && window.SoundFX.diceClick) window.SoundFX.diceClick(force);
+            });
+        });
     }
 
     // Face-up rotation map (matches engine.js dice texture ordering)
@@ -140,6 +178,10 @@
             b.quaternion.setFromEuler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
         });
 
+        rollInFlight = true;
+        hadTableContact = false;
+        lastClickAt[0] = 0; lastClickAt[1] = 0;
+
         const FIXED_DT = 1 / 60;
         const MAX_SIM_MS = 3500;     // SIMULATED time budget — a hidden tab pauses
         let simElapsed = 0;          // rAF, so the clock must pause with it (no
@@ -148,9 +190,24 @@
         const REST_Y = 2.4;          // ground (1.0) + half-die (1.4)
         const CLAMP_XZ = 10;         // keep landed dice visually inside the walls
 
+        // Held-breath slow-mo: one-shot per roll, armed until both dice are
+        // ALMOST settled, then 0.45x sim speed for up to 400ms of SIM time.
+        // (This path never runs under reduced motion — roll() bails earlier.)
+        let slowMoArmed = true;
+        let slowMoRemainingMs = 0;
+
         function step(now) {
-            const dt = Math.min(0.05, (now - lastT) / 1000);
+            let dt = Math.min(0.05, (now - lastT) / 1000);
             lastT = now;
+            if (slowMoArmed && bodies.every(b =>
+                b.velocity.length() < 1.2 && b.angularVelocity.length() < 2.0)) {
+                slowMoArmed = false;
+                slowMoRemainingMs = 400;
+            }
+            if (slowMoRemainingMs > 0) {
+                dt *= 0.45;
+                slowMoRemainingMs -= dt * 1000;
+            }
             simElapsed += dt * 1000;
             world.step(FIXED_DT, dt, 3);
             // Sync mesh from body
@@ -166,10 +223,20 @@
             requestAnimationFrame(step);
         }
 
-        // Final 250ms: slerp orientation onto the rolled faces AND lerp the
+        // STAGED REVEAL — final slerp onto the rolled faces AND lerp the
         // POSITION onto the felt. Even a forced timeout (die still airborne)
         // lands it on the table — a hovering die is impossible by construction.
+        // The dice snap SEQUENTIALLY: die 1 (250ms ease) → +120ms → die 2.
+        // Each landing pulses its material emissive gold; the second landing
+        // carries the settle chime + haptic, then callback(true) fires.
+        //
+        //   t=0    die 1 slerp starts
+        //   t=120  die 2 slerp starts
+        //   t=250  die 1 lands → gold pulse A (280ms)
+        //   t=370  die 2 lands → gold pulse B + diceSettle + haptic(30) + callback
+        //   t=650  pulse B done, emissive restored exactly
         function beginSnap() {
+            rollInFlight = false; // physics over — stop collision clicks
             const targetQ = [faceQuat(d1), faceQuat(d2)];
             const startQ = bodies.map(b => ({
                 x: b.quaternion.x, y: b.quaternion.y, z: b.quaternion.z, w: b.quaternion.w
@@ -192,11 +259,41 @@
                 targetP[1].x += nx * push; targetP[1].z += nz * push;
             }
 
-            const tStart = performance.now();
-            function snap(now2) {
-                const t = Math.min(1, (now2 - tStart) / 250);
-                const ease = t * (2 - t); // easeOutQuad — settles, not slams
-                bodies.forEach((b, i) => {
+            const SNAP_MS = 250, STAGGER_MS = 120, PULSE_MS = 280;
+            const reducedNow = window.Settings && window.Settings.isReducedMotion();
+
+            // Pulse a die's emissive gold up and back down, then restore the
+            // material's EXACT prior emissive color + intensity (array-safe).
+            function pulseGold(mesh) {
+                if (reducedNow || !mesh) return;
+                const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+                const saved = mats.filter(m => m && m.emissive).map(m => ({
+                    m, hex: m.emissive.getHex(), intensity: m.emissiveIntensity
+                }));
+                if (!saved.length) return;
+                const t0 = performance.now();
+                function tick(nowP) {
+                    const t = Math.min(1, (nowP - t0) / PULSE_MS);
+                    const amp = Math.sin(t * Math.PI); // 0 → 1 → 0
+                    saved.forEach(s => {
+                        s.m.emissive.setHex(0xE8C16B);
+                        s.m.emissiveIntensity = s.intensity + amp * 0.85;
+                    });
+                    if (t < 1) requestAnimationFrame(tick);
+                    else saved.forEach(s => {
+                        s.m.emissive.setHex(s.hex);
+                        s.m.emissiveIntensity = s.intensity;
+                    });
+                }
+                requestAnimationFrame(tick);
+            }
+
+            // Snap ONE die over SNAP_MS with easeOutQuad, then onLand().
+            function snapDie(i, onLand) {
+                const tStart = performance.now();
+                function frame(now2) {
+                    const t = Math.min(1, (now2 - tStart) / SNAP_MS);
+                    const ease = t * (2 - t); // easeOutQuad — settles, not slams
                     const sq = startQ[i], tq = targetQ[i];
                     // Slerp via THREE.Quaternion for convenience
                     const a = new THREE.Quaternion(sq.x, sq.y, sq.z, sq.w);
@@ -209,11 +306,21 @@
                         sp.y + (tp.y - sp.y) * ease,
                         sp.z + (tp.z - sp.z) * ease
                     );
-                });
-                if (t < 1) requestAnimationFrame(snap);
-                else if (callback) callback(true);
+                    if (t < 1) requestAnimationFrame(frame);
+                    else onLand();
+                }
+                requestAnimationFrame(frame);
             }
-            requestAnimationFrame(snap);
+
+            snapDie(0, () => { pulseGold(meshes[0]); }); // first die: silent reveal
+            setTimeout(() => {
+                snapDie(1, () => {
+                    pulseGold(meshes[1]);
+                    if (window.SoundFX && window.SoundFX.diceSettle) window.SoundFX.diceSettle();
+                    if (window.Settings && window.Settings.haptic) window.Settings.haptic(30);
+                    if (callback) callback(true);
+                });
+            }, STAGGER_MS);
         }
 
         requestAnimationFrame(step);
