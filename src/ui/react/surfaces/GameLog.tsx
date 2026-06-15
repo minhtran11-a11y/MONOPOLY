@@ -199,8 +199,8 @@ export default function GameLog() {
                     <button
                         type="button"
                         onClick={() => window.replayLastRoll?.()}
-                        aria-label="Xem lại lần đổ xí ngầu"
-                        title="Xem lại lần đổ xí ngầu"
+                        aria-label="Xem lại lần tung xúc xắc"
+                        title="Xem lại lần tung xúc xắc"
                         className={HEADER_BUTTON_CLASS}
                     >
                         🎲

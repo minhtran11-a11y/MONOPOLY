@@ -24,7 +24,6 @@ import './3d/tokens.js';
 import './3d/pool.js';
 import './3d/animations.js';
 import './3d/landmarks.js';
-import './3d/dice_physics.js';
 import './3d/cinematics.js';
 import './game/game.js';
 import './core/rules.js';

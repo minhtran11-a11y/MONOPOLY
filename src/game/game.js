@@ -79,7 +79,7 @@ const Game = {
 
         if (p.inJail) {
             // FIX-3: turn counting + fine live in the roll handler (shared with bots)
-            showModal(`Lượt của ${p.name}`, `Đang trong tù (Lượt ${p.jailTurns + 1}/3). Đang tự động đổ xí ngầu...`, ['roll']);
+            showModal(`Lượt của ${p.name}`, `Đang trong tù (Lượt ${p.jailTurns + 1}/3). Đang tự động tung xúc xắc...`, ['roll']);
             
             // Auto-process jail turn for human to keep bot flow
             setTimeout(() => {
@@ -89,7 +89,7 @@ const Game = {
                 }
             }, 2000);
         } else {
-            showModal(`Lượt của ${p.name}`, `Mời bạn đổ xí ngầu để di chuyển.`, buttons);
+            showModal(`Lượt của ${p.name}`, `Nhấn giữ phím Space hoặc giữ nút để tung xúc xắc.`, buttons);
         }
     },
 
@@ -117,19 +117,19 @@ const Game = {
                 }
             }
 
-            // Phase 3: Move Decision
+            // Phase 3: Move Decision — physics decides d1/d2 now, not Math.random.
             setTimeout(() => {
                 p.isThinking = false;
                 updatePlayerUI();
-                
-                let d1 = Math.floor(Math.random() * 6) + 1;
-                let d2 = Math.floor(Math.random() * 6) + 1;
-                let total = d1 + d2;
-                let isDouble = (d1 === d2);
 
                 if(window.SoundFX) window.SoundFX.roll();
-                rollDiceAnimation(d1, d2, () => {
-                    logMsg(`🎲 NPC ${p.name} đổ được ${total} (${d1} & ${d2})`);
+                // Bot uses a fixed mid-power toss (no UI to charge); player
+                // has the press-and-hold charge UI in _bindRollButton.
+                tossDice((d1, d2) => {
+                    const total = d1 + d2;
+                    const isDouble = (d1 === d2);
+                    Game.lastRoll = { d1, d2, total, player: p.name };
+                    logMsg(`🎲 NPC ${p.name} tung được ${total} (${d1} & ${d2})`);
                     if (p.inJail) {
                         if (p.jailFreeCards > 0) {
                             p.jailFreeCards--;
@@ -140,21 +140,21 @@ const Game = {
                             p.jailTurns++;
                             if (isDouble || p.jailTurns >= 3) {
                                 if (!isDouble) {
-                                    this.payMoney(p, 'bank', 50); // FIX-3: fine via payment pipeline
+                                    this.payMoney(p, 'bank', 50);
                                     if (p.bankrupt) { setTimeout(() => Game.checkEndTurnPhase(false), 800); return; }
                                 }
                                 p.inJail = false; p.jailTurns = 0;
-                                logMsg(`🔓 NPC ${p.name} đã thoát tù (${isDouble ? 'đổ được đôi' : 'hết hạn'})!`);
+                                logMsg(`🔓 NPC ${p.name} đã thoát tù (${isDouble ? 'tung được đôi' : 'hết hạn'})!`);
                                 this.movePlayerAnim(p, total, isDouble);
                             } else {
-                                logMsg(`🔒 NPC ${p.name} không đổ được đôi. Tiếp tục ở lại tù.`);
+                                logMsg(`🔒 NPC ${p.name} không tung được đôi. Tiếp tục ở lại tù.`);
                                 setTimeout(() => Game.checkEndTurnPhase(false), 800);
                             }
                         }
                     } else {
                         this.movePlayerAnim(p, total, isDouble);
                     }
-                });
+                }, 0.6);
             }, 400); // Quick think before roll
 
         }, 400); // Fast analysis delay
@@ -626,26 +626,62 @@ const Game = {
 window.Game = Game; // LEGACY-BRIDGE
 window.initGameSession = (total, mode) => Game.init(total, mode); // LEGACY-BRIDGE
 
-// --- ROLL BUTTON BINDING (wired after DOM ready) ---
+// --- ROLL BUTTON BINDING (press-and-hold to charge force) ---
+//
+// Each turn the player can HOLD the dice button to charge a power level
+// (0..1, ramps to full over ~1.2s of hold) and RELEASE to fire the toss
+// with that power. Power scales dice height/spread/spin inside
+// rollDiceAnimation(). Bot + online paths still fire instantly with a
+// default power so nothing gameplay-side breaks.
 function _bindRollButton() {
     const btnRoll = document.getElementById('btn-roll');
     if (!btnRoll) return;
-    btnRoll.onclick = () => {
+
+    const CHARGE_MS = 1200;
+    const MIN_POWER = 0.18;
+    const MAX_POWER = 1.0;
+    let pressStart = null;
+    let chargeRaf = null;
+    let activePointerId = null;
+
+    const meter = _ensurePowerMeter();
+    const hint = _ensureRollHint(btnRoll);
+
+    // 0 (untouched) → MIN_POWER (instant tap) → MAX_POWER (full charge)
+    const currentPower = () => {
+        if (pressStart == null) return 0;
+        const t = Math.min(1, (performance.now() - pressStart) / CHARGE_MS);
+        return MIN_POWER + t * (MAX_POWER - MIN_POWER);
+    };
+
+    const drawMeter = () => {
+        const p = currentPower();
+        const pct = Math.round(p * 100);
+        meter.fill.style.width = pct + '%';
+        meter.text.textContent = `${pct}%`;
+        const color = p < 0.4 ? '#22c55e' : p < 0.75 ? '#f59e0b' : '#ef4444';
+        meter.fill.style.background = color;
+        // Subtle button glow to mirror the power level
+        btnRoll.style.boxShadow = `0 0 0 ${Math.round(p * 8)}px ${color}55`;
+        if (pressStart != null) chargeRaf = requestAnimationFrame(drawMeter);
+    };
+
+    const fireRoll = (power) => {
         // ONLINE-MODE: route to the authoritative referee (hook installed by
         // the MenuScreens online boot; dice are rolled server-side).
         if (window._gameMode === 'online') { window._onlineSend?.({ type: 'ROLL' }); return; }
         if (window.isAnimating) return;
         hideModal();
         const p = Game.players[Game.currentPlayerIndex];
-        let d1 = Math.floor(Math.random() * 6) + 1;
-        let d2 = Math.floor(Math.random() * 6) + 1;
-        let total = d1 + d2;
-        let isDouble = (d1 === d2);
-        Game.lastRoll = { d1, d2, total, player: p ? p.name : null };
+        if (!p) return;
 
-        if(window.SoundFX) window.SoundFX.roll();
-        rollDiceAnimation(d1, d2, () => {
-            logMsg(`🎲 ${p.name} đổ được ${total} (${d1} & ${d2})`);
+        if (window.SoundFX) window.SoundFX.roll();
+        // Physics decides d1/d2 — whichever face ends up on top of each die.
+        tossDice((d1, d2) => {
+            const total = d1 + d2;
+            const isDouble = (d1 === d2);
+            Game.lastRoll = { d1, d2, total, player: p.name };
+            logMsg(`🎲 ${p.name} tung được ${total} (${d1} & ${d2})`);
             if (p.inJail) {
                 if (p.jailFreeCards > 0) {
                     p.jailFreeCards--;
@@ -653,29 +689,165 @@ function _bindRollButton() {
                     logMsg(`🔓 ${p.name} đã sử dụng thẻ "Mãn Hạn Tù" để thoát!`);
                     Game.movePlayerAnim(p, total, false);
                 } else if (isDouble) {
-                    logMsg(`🔓 ${p.name} đổ được đôi ${d1}-${d2} và đã thoát tù!`);
+                    logMsg(`🔓 ${p.name} tung được đôi ${d1}-${d2} và đã thoát tù!`);
                     p.inJail = false; p.jailTurns = 0;
                     Game.movePlayerAnim(p, total, false);
                 } else {
-                    // FIX-3: unified jail counting — same semantics as the bot path
                     p.jailTurns++;
                     if (p.jailTurns >= 3) {
-                        Game.payMoney(p, 'bank', 50); // fine via pipeline (liquidation/bankruptcy apply)
+                        Game.payMoney(p, 'bank', 50);
                         if (p.bankrupt) { Game.checkEndTurnPhase(false); return; }
                         p.inJail = false; p.jailTurns = 0;
                         logMsg(`🔓 ${p.name} đã nộp phạt $50 và thoát tù!`);
                         Game.movePlayerAnim(p, total, false);
                     } else {
-                        logMsg(`🔒 ${p.name} không đổ được đôi. Tiếp tục ở lại tù (Lượt ${p.jailTurns}/3).`);
+                        logMsg(`🔒 ${p.name} không tung được đôi. Tiếp tục ở lại tù (Lượt ${p.jailTurns}/3).`);
                         Game.checkEndTurnPhase(false);
                     }
                 }
             } else {
                 Game.movePlayerAnim(p, total, isDouble);
             }
-        });
+        }, power);
+    };
+
+    const updateHint = () => {
+        const hidden = btnRoll.classList.contains('hidden');
+        const charging = pressStart != null;
+        const animating = window.isAnimating === true;
+        // Hint visible only when button is shown AND not charging AND idle.
+        hint.root.classList.toggle('is-visible', !hidden && !charging && !animating);
+    };
+
+    const beginCharge = (pointerId) => {
+        if (window.isAnimating) return;
+        if (pressStart != null) return; // already charging
+        activePointerId = pointerId ?? null;
+        pressStart = performance.now();
+        meter.root.classList.add('is-active');
+        updateHint();
+        chargeRaf = requestAnimationFrame(drawMeter);
+    };
+
+    const endCharge = (cancel = false) => {
+        if (pressStart == null) return;
+        const power = currentPower();
+        pressStart = null;
+        activePointerId = null;
+        if (chargeRaf) cancelAnimationFrame(chargeRaf);
+        chargeRaf = null;
+        meter.root.classList.remove('is-active');
+        btnRoll.style.boxShadow = '';
+        meter.fill.style.width = '0%';
+        updateHint();
+        if (!cancel) fireRoll(power);
+    };
+
+    // Re-evaluate hint whenever ui.js toggles .hidden on the button
+    // (showModal/hideModal toggle .hidden to show/hide the roll button).
+    new MutationObserver(updateHint).observe(btnRoll, {
+        attributes: true,
+        attributeFilter: ['class'],
+    });
+    updateHint();
+    // Cheap polling fallback for window.isAnimating changes (no setter trap)
+    setInterval(updateHint, 400);
+
+    btnRoll.addEventListener('pointerdown', (e) => {
+        if (window.isAnimating) return;
+        try { btnRoll.setPointerCapture(e.pointerId); } catch (err) { /* unsupported */ }
+        beginCharge(e.pointerId);
+    });
+    btnRoll.addEventListener('pointerup', (e) => {
+        if (activePointerId != null && e.pointerId !== activePointerId) return;
+        endCharge(false);
+    });
+    btnRoll.addEventListener('pointercancel', () => endCharge(true));
+
+    // Keyboard: Space = press-and-hold equivalent.
+    let spaceDown = false;
+    document.addEventListener('keydown', (e) => {
+        if (e.code !== 'Space') return;
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+        if (btnRoll.classList.contains('hidden')) return;
+        e.preventDefault();
+        if (spaceDown) return;
+        spaceDown = true;
+        beginCharge(null);
+    });
+    document.addEventListener('keyup', (e) => {
+        if (e.code !== 'Space') return;
+        if (!spaceDown) return;
+        spaceDown = false;
+        endCharge(false);
+    });
+
+    // Expose for the replay / online / test paths to fire a roll directly.
+    window._fireRoll = (power) => fireRoll(power ?? 0.6);
+}
+
+// Inject the power meter once, positioned just above the dice button. Stays
+// hidden until .is-active is added.
+function _ensurePowerMeter() {
+    let root = document.getElementById('dice-power-meter');
+    if (root) {
+        return {
+            root,
+            fill: root.querySelector('.dice-power-fill'),
+            text: root.querySelector('.dice-power-text'),
+        };
+    }
+    root = document.createElement('div');
+    root.id = 'dice-power-meter';
+    root.className = 'dice-power-meter';
+    root.setAttribute('aria-hidden', 'true');
+    root.innerHTML = `
+        <div class="dice-power-label">Lực</div>
+        <div class="dice-power-track">
+            <div class="dice-power-fill"></div>
+        </div>
+        <div class="dice-power-text">0%</div>
+    `;
+    // Append to body — fixed positioning handles placement
+    document.body.appendChild(root);
+    return {
+        root,
+        fill: root.querySelector('.dice-power-fill'),
+        text: root.querySelector('.dice-power-text'),
     };
 }
+
+// Inject "Nhấn giữ Space hoặc nút để tăng lực" hint as a chip under the
+// roll button row. Visible only when .is-visible is added by updateHint().
+function _ensureRollHint(btnRoll) {
+    let root = document.getElementById('dice-roll-hint');
+    if (!root) {
+        root = document.createElement('div');
+        root.id = 'dice-roll-hint';
+        root.className = 'dice-roll-hint';
+        root.setAttribute('aria-hidden', 'true');
+        // Anchor to the action-modal so the chip sits underneath the button row.
+        const parent = document.getElementById('action-modal')
+            || btnRoll.parentElement?.parentElement
+            || btnRoll.parentElement
+            || document.body;
+        root.innerHTML = `
+            <span class="dice-roll-hint-icon" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v10"/>
+                    <circle cx="12" cy="16" r="4"/>
+                </svg>
+            </span>
+            <span class="dice-roll-hint-text">
+                Nhấn giữ Space hoặc nút — thả ra để tung
+            </span>
+        `;
+        parent.appendChild(root);
+    }
+    return { root };
+}
+
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _bindRollButton);
 } else {
@@ -684,7 +856,7 @@ if (document.readyState === 'loading') {
 
 window.replayLastRoll = () => { // LEGACY-BRIDGE
     if (!Game.lastRoll) {
-        if (window.Toast) window.Toast.show('Chưa có lần đổ xí ngầu nào', { type: 'warn' });
+        if (window.Toast) window.Toast.show('Chưa có lần tung xúc xắc nào', { type: 'warn' });
         return;
     }
     if (window.isAnimating) return;

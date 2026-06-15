@@ -68,7 +68,7 @@ interface ButtonAppearance {
  *   end         -> gold-on-lacquer (turn close — the "next" rhythm beat)
  */
 const BUTTON_APPEARANCE: Record<string, ButtonAppearance> = {
-    roll: { label: 'ĐỔ XÍ NGẦU', bgClass: 'btn-son' },
+    roll: { label: 'TUNG XÚC XẮC', bgClass: 'btn-son' },
     'build-menu': { label: 'XÂY NHÀ', bgClass: 'btn-terracotta' },
     buy: { label: 'MUA ĐẤT', bgClass: 'btn-son' },
     skip: { label: 'BỎ QUA', bgClass: 'btn-taupe' },

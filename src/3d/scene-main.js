@@ -76,12 +76,6 @@ function init3D() {
     window.dice1 = ctx3d.dice1; // LEGACY-BRIDGE
     window.dice2 = ctx3d.dice2; // LEGACY-BRIDGE
 
-    // Pre-warm dice physics on idle so the first roll uses real cannon-es
-    if (window.DicePhysics) {
-        const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1500));
-        idle(() => { window.DicePhysics.ensureReady(); });
-    }
-
     window.addEventListener('resize', () => {
         ctx3d.camera.aspect = window.innerWidth / window.innerHeight;
         ctx3d.camera.updateProjectionMatrix();

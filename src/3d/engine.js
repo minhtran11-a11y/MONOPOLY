@@ -404,8 +404,7 @@ function createDecks() {
 function createDice() {
     const diceGeo = new THREE.BoxGeometry(2.8, 2.8, 2.8);
     // SƠN MÀI dice: aged-bone ivory body, engraved pips, gold hairline borders.
-    // Slight warm emissive fakes a lacquer sheen without an envMap (perf-sane);
-    // dice_physics pulses emissive gold on reveal and restores these exact values.
+    // Slight warm emissive fakes a lacquer sheen without an envMap (perf-sane).
     const makeDiceMat = (num) => new THREE.MeshStandardMaterial({
         map: createDiceTexture(num),
         roughness: 0.32,
@@ -648,7 +647,7 @@ function tweenCamera(endPos, endTarget, duration, callback) {
     ctx3d.isCameraAnimating = true;
 }
 
-// rollDiceAnimation lives in js/dice_anim.js to keep engine.js < 800 LOC.
+// rollDiceAnimation lives in src/3d/dice_anim.js (stub pending rebuild).
 
 function showCardAnimation(type, desc, colorHex, sourceZ, callback) {
     window.isAnimating = true;

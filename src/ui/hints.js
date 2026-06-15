@@ -4,7 +4,7 @@
     const HINTS = {
         PROPERTY: 'Đây là ô đất. Nhấp để xem giá thuê chi tiết, hoặc dừng lại để mua.',
         RAILROAD: 'Bến tàu / sân bay. Sở hữu càng nhiều, tiền thuê càng cao (25 → 200).',
-        UTILITY:  'Công ty tiện ích. Tiền thuê = số trên xí ngầu × 4 (hoặc × 10 nếu sở hữu cả 2).',
+        UTILITY:  'Công ty tiện ích. Tiền thuê = số trên xúc xắc × 4 (hoặc × 10 nếu sở hữu cả 2).',
         CHANCE:   'Ô Cơ Hội. Rút thẻ bài bất ngờ — có thể tốt hoặc xấu!',
         CHEST:    'Ô Khí Vận. Rút thẻ khí vận để nhận lộc hoặc trả phí.',
         TAX:      'Ô Thuế. Bạn phải nộp một khoản cho ngân hàng khi dừng tại đây.',

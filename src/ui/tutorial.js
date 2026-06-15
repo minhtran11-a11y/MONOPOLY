@@ -10,7 +10,7 @@
         },
         {
             title: '🎲 Cách di chuyển',
-            body: 'Nhấn nút <strong>ĐỔ XÍ NGẦU</strong> (hoặc phím <strong>Space</strong>) để tung 2 xí ngầu. Quân cờ của bạn sẽ tự động di chuyển trên bàn cờ.'
+            body: 'Nhấn giữ nút <strong>TUNG XÚC XẮC</strong> (hoặc phím <strong>Space</strong>) để tăng lực, thả ra để tung 2 xúc xắc. Quân cờ của bạn sẽ tự động di chuyển trên bàn cờ.'
         },
         {
             title: '🏡 Mua đất & xây nhà',
