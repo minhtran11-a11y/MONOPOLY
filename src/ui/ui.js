@@ -1,7 +1,7 @@
 // --- UI MANAGER ---
 
 
-document.addEventListener('DOMContentLoaded', () => {
+function _initUIManager() {
     window.logEl = document.getElementById('game-log'); // LEGACY-BRIDGE
     window.playersContainer = document.getElementById('players-container'); // LEGACY-BRIDGE
     window.actionModal = document.getElementById('action-modal'); // LEGACY-BRIDGE
@@ -173,7 +173,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (btn && !btn.classList.contains('hidden')) btn.click();
         }
     });
-});
+}
+
+// Run immediately if DOM is already parsed (typical for ES modules loaded at
+// end of body — by the time main.js finishes its sync import chain, the
+// document is already `interactive`/`complete`, and a DOMContentLoaded
+// listener registered now would never fire). Mirrors the pattern in game.js.
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _initUIManager);
+} else {
+    _initUIManager();
+}
 
 // --- UNIFIED NOTIFICATION HELPER (log + toast + haptic) ---
 function notify(msg, opts = {}) {

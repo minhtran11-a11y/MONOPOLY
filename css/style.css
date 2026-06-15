@@ -243,6 +243,29 @@ body {
 }
 .hud-btn:active { transform: translateY(0) scale(0.97); }
 
+/* --- TILE INFO HOVER CARD ---
+   Authored with plain CSS instead of Tailwind utility stacks: the previous
+   `absolute bottom-36 -translate-x-1/2 translate-y-32` chain re-used the same
+   --tw-translate-y var for both centering and the slide-in offset, so removing
+   `translate-y-32` on hover left transform reading a stale value and the card
+   drifted off-screen toward the top. Pinning explicitly to the viewport with
+   `position: fixed` + a single transform-origin avoids the whole class. */
+.tile-info-card {
+    position: fixed;
+    bottom: 9rem;
+    left: 50%;
+    transform: translate(-50%, 8rem); /* slide-in from below */
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.7s var(--ease-lac, cubic-bezier(.2,.8,.2,1)),
+                opacity 0.5s ease;
+    z-index: 30; /* above HUD (z-10), below modals (z-[1000]+) */
+}
+.tile-info-card.is-visible {
+    transform: translate(-50%, 0);
+    opacity: 1;
+}
+
 /* Log header icon buttons (replay / export) */
 .log-icon-btn {
     font-size: 0.85rem;
@@ -474,8 +497,18 @@ body.reduced-motion .drum-watermark svg { animation: none !important; }
     gap: 1rem;
     z-index: 20;
     max-height: calc(100vh - 4rem);
+    /* Allow scroll when many players, but hide the scrollbar chrome and
+       prevent the horizontal track that ring-4/scale-105 of the current-turn
+       card was pushing into existence. */
     overflow-y: auto;
+    overflow-x: hidden;
+    /* Padding absorbs the 4px ring + 5% scale-up of the active card so they
+       no longer trigger an outer scrollbar. */
+    padding: 0.75rem 0.75rem 0.75rem 1rem;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge legacy */
 }
+.players-shell::-webkit-scrollbar { display: none; } /* Chromium/WebKit */
 .players-toggle { display: none; }
 
 /* Mobile: convert to bottom sheet drawer */

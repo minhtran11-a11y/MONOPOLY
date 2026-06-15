@@ -148,7 +148,7 @@ function init3D() {
                 hit.userData._glowMesh = glow;
             }
 
-            tileInfo.classList.remove('translate-y-32', 'opacity-0');
+            tileInfo.classList.add('is-visible');
             document.getElementById('tile-name').innerText = data.name;
             // First-hover hint per tile type
             if (window.HintHover) window.HintHover.maybeShow(data.type);
@@ -165,7 +165,7 @@ function init3D() {
                 document.getElementById('tile-owner').innerText = "";
             }
         } else {
-            tileInfo.classList.add('translate-y-32', 'opacity-0');
+            tileInfo.classList.remove('is-visible');
             clearHoverLift();
         }
     });
