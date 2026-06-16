@@ -784,6 +784,15 @@ function _bindRollButton() {
 
     // Expose for the replay / online / test paths to fire a roll directly.
     window._fireRoll = (power) => fireRoll(power ?? 0.6);
+
+    // Expose charge controls so React surfaces (ActionModal) can proxy the
+    // press-and-hold gesture from their own rendered roll button. Without
+    // this the React button could only forward a synthetic click() into
+    // legacy #btn-roll, which our charge logic ignores (we only listen to
+    // pointerdown/pointerup, not click).
+    window._rollChargeBegin = (pointerId) => beginCharge(pointerId ?? null);
+    window._rollChargeEnd = () => endCharge(false);
+    window._rollChargeCancel = () => endCharge(true);
 }
 
 // Inject the power meter once, positioned just above the dice button. Stays

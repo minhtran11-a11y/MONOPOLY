@@ -28,6 +28,7 @@
  */
 
 import { useEffect, useId, useMemo, useState } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import { installFacade } from '../facade.ts';
 import { legacyButtonId, uiStore, useUiStore } from '../../../store/uiStore.ts';
 import type { ModalButton } from '../../../store/uiStore.ts';
@@ -116,6 +117,26 @@ function syncLegacyButtonVisibility(kinds: ReadonlyArray<string>): void {
 /** React buttons are pure proxies onto the hidden legacy buttons. */
 function proxyClickLegacyButton(kind: string): void {
     document.getElementById(legacyButtonId(kind))?.click();
+}
+
+/**
+ * Roll-specific: forward pointer down/up into the legacy charge controls
+ * exposed by game.js (`window._rollChargeBegin` / `_rollChargeEnd`). Without
+ * this, the React roll button could only forward a synthetic click() into
+ * the hidden #btn-roll, which the legacy charge logic ignores (it only
+ * listens to pointerdown/pointerup, not click).
+ */
+function beginRollChargeProxy(e: ReactPointerEvent<HTMLButtonElement>): void {
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    (window as unknown as {
+        _rollChargeBegin?: (id?: number | null) => void;
+    })._rollChargeBegin?.(e.pointerId);
+}
+function endRollChargeProxy(): void {
+    (window as unknown as { _rollChargeEnd?: () => void })._rollChargeEnd?.();
+}
+function cancelRollChargeProxy(): void {
+    (window as unknown as { _rollChargeCancel?: () => void })._rollChargeCancel?.();
 }
 
 // ---------------------------------------------------------------------------
@@ -236,6 +257,23 @@ export default function ActionModal() {
                     {kinds.map((kind) => {
                         const look = appearanceFor(kind);
                         const pulse = suggestFirst && kind === firstKind;
+                        // Roll button is press-and-hold to charge — proxy pointer
+                        // events into the legacy charge controls. Every other
+                        // action button stays a simple click proxy.
+                        if (kind === 'roll') {
+                            return (
+                                <button
+                                    key={kind}
+                                    type="button"
+                                    onPointerDown={beginRollChargeProxy}
+                                    onPointerUp={endRollChargeProxy}
+                                    onPointerCancel={cancelRollChargeProxy}
+                                    className={`btn-action ${look.bgClass}${pulse ? ' suggest-pulse' : ''}`}
+                                >
+                                    {look.label}
+                                </button>
+                            );
+                        }
                         return (
                             <button
                                 key={kind}
